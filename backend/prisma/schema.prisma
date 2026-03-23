@@ -1,0 +1,210 @@
+// Prisma Schema for NexoCRM
+// Defines all database models, relations, and enums
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// USER MODEL - Authentication & ownership
+// ─────────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // bcrypt hashed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  clients Client[]
+  tasks   Task[]
+  deals   Deal[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// CLIENT MODEL - Core CRM contact
+// ─────────────────────────────────────────────
+model Client {
+  id         String       @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  company    String?
+  status     ClientStatus @default(ACTIVE)
+  leadSource String?      // e.g. "Instagram", "Google", "Indicação"
+  birthday   DateTime?
+  notes      String?      @db.Text
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  // Owner (logged-in user)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  customFieldValues CustomFieldValue[]
+  segments          ClientSegment[]
+  deals             Deal[]
+  tasks             Task[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("clients")
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  LEAD
+}
+
+// ─────────────────────────────────────────────
+// SEGMENT MODEL - Client grouping / tags
+// ─────────────────────────────────────────────
+model Segment {
+  id          String   @id @default(cuid())
+  name        String
+  color       String   @default("#6366f1") // hex color
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Many-to-many via join table
+  clients ClientSegment[]
+
+  @@map("segments")
+}
+
+// ─────────────────────────────────────────────
+// CLIENT <-> SEGMENT Join Table (Many-to-Many)
+// ─────────────────────────────────────────────
+model ClientSegment {
+  clientId  String
+  segmentId String
+
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  segment Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, segmentId])
+  @@map("client_segments")
+}
+
+// ─────────────────────────────────────────────
+// CUSTOM FIELD DEFINITION - Dynamic schema per org
+// ─────────────────────────────────────────────
+model CustomField {
+  id        String    @id @default(cuid())
+  label     String    // Display name, e.g. "CPF", "Annual Revenue"
+  type      FieldType @default(TEXT)
+  visible   Boolean   @default(true) // Show in clients table
+  order     Int       @default(0)    // Display order
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Values associated with this field
+  values CustomFieldValue[]
+
+  @@map("custom_fields")
+}
+
+enum FieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  BOOLEAN
+}
+
+// ─────────────────────────────────────────────
+// CUSTOM FIELD VALUE - Per-client dynamic values
+// ─────────────────────────────────────────────
+model CustomFieldValue {
+  id            String @id @default(cuid())
+  value         String // Stored as string, parsed by field type
+  clientId      String
+  customFieldId String
+
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  customField CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, customFieldId]) // One value per field per client
+  @@map("custom_field_values")
+}
+
+// ─────────────────────────────────────────────
+// PIPELINE STAGE - Kanban columns
+// ─────────────────────────────────────────────
+model Stage {
+  id        String   @id @default(cuid())
+  name      String   // e.g. "Prospecção", "Qualificação", "Proposta"
+  order     Int      // Column position (left to right)
+  color     String   @default("#6366f1")
+  createdAt DateTime @default(now())
+
+  // Deals in this stage
+  deals Deal[]
+
+  @@map("stages")
+}
+
+// ─────────────────────────────────────────────
+// DEAL MODEL - Sales opportunity / pipeline card
+// ─────────────────────────────────────────────
+model Deal {
+  id          String    @id @default(cuid())
+  title       String
+  value       Float     @default(0)
+  closeDate   DateTime?
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  stageId  String
+  stage    Stage   @relation(fields: [stageId], references: [id])
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stageId])
+  @@index([userId])
+  @@map("deals")
+}
+
+// ─────────────────────────────────────────────
+// TASK MODEL - To-do items linked to clients
+// ─────────────────────────────────────────────
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String?      @db.Text
+  dueDate     DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  completed   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([completed])
+  @@map("tasks")
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
