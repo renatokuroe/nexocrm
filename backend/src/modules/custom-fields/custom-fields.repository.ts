@@ -1,6 +1,7 @@
 // Custom Fields Repository
-import { FieldType } from "@prisma/client";
 import { prisma } from "../../prisma/client";
+
+type FieldType = "TEXT" | "NUMBER" | "DATE" | "SELECT" | "BOOLEAN";
 
 export class CustomFieldsRepository {
     async findAll() {

@@ -1,7 +1,8 @@
 // Custom Fields Service
-import { FieldType } from "@prisma/client";
 import { CustomFieldsRepository } from "./custom-fields.repository";
 import { NotFoundError } from "../../utils/errors";
+
+type FieldType = "TEXT" | "NUMBER" | "DATE" | "SELECT" | "BOOLEAN";
 
 export class CustomFieldsService {
     private repository = new CustomFieldsRepository();

@@ -1,6 +1,6 @@
 // Clients Module - Type Definitions
 
-import { ClientStatus } from "@prisma/client";
+export type ClientStatus = "ACTIVE" | "INACTIVE" | "LEAD";
 
 export interface CreateClientDto {
     name: string;
