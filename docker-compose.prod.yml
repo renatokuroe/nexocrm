@@ -21,8 +21,6 @@ services:
       start_period: 40s
     networks:
       - nexo-network
-    depends_on:
-      - db
     logging:
       driver: "json-file"
       options:
@@ -52,35 +50,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  db:
-    image: mysql:8.0
-    container_name: nexocrm-db
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: nexocrm
-      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: always
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-    networks:
-      - nexo-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
 networks:
   nexo-network:
     driver: bridge
-
-volumes:
-  mysql_data:
-    driver: local
