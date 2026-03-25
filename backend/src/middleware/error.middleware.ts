@@ -42,6 +42,15 @@ export function errorHandler(
         return;
     }
 
+    // ── Malformed JSON body (body-parser / express.json) ────────────────
+    if ((err as any).type === "entity.parse.failed") {
+        res.status(400).json({
+            success: false,
+            message: "Invalid JSON payload",
+        });
+        return;
+    }
+
     // ── Unknown / unexpected errors ───────────────────────────────────────
     console.error("Unhandled error:", err);
 
