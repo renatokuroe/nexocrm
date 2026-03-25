@@ -67,6 +67,14 @@ jobs:
             echo "📥 Pulling latest code..."
             git fetch origin
             git pull --ff-only origin main
+
+            echo "🔧 Ensuring Docker Compose v2..."
+            if ! docker compose version >/dev/null 2>&1; then
+              mkdir -p ~/.docker/cli-plugins
+              curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+              chmod +x ~/.docker/cli-plugins/docker-compose
+            fi
+            COMPOSE_CMD="docker compose"
             
             echo "🔨 Building backend image..."
             set -a && . ./.env.production && set +a
@@ -76,7 +84,7 @@ jobs:
             docker build -t nexocrm-frontend:latest ./frontend
 
             echo "🚀 Starting services..."
-            docker-compose -f docker-compose.prod.yml up -d --remove-orphans
+            $COMPOSE_CMD -f docker-compose.prod.yml up -d --remove-orphans
 
             echo "🔎 Validating Next.js static assets..."
             ASSET_PATH=$(curl -s http://127.0.0.1:3000/login | grep -o '/_next/static/[^"[:space:]]*layout\.css' | head -n 1 || true)
