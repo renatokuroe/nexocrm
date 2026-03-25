@@ -69,7 +69,9 @@ jobs:
             git pull --ff-only origin main
             
             echo "🔨 Cleaning up old containers..."
-            docker-compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker container rm -f nexocrm-backend nexocrm-frontend 2>/dev/null || true
+            docker network rm nexocrm_nexo-network 2>/dev/null || true
+            docker volume prune -f 2>/dev/null || true
             
             echo "🔨 Rebuilding backend..."
             docker build -t nexocrm-backend:latest ./backend
