@@ -10,8 +10,9 @@ const DEAL_INCLUDE = {
 export class PipelineRepository {
     // ── Stages ────────────────────────────────────────────────────────────
 
-    async findAllStages() {
+    async findAllStages(tenantId: string) {
         return prisma.stage.findMany({
+            where: { tenantId },
             orderBy: { order: "asc" },
             include: {
                 _count: { select: { deals: true } },
@@ -19,14 +20,15 @@ export class PipelineRepository {
         });
     }
 
-    async createStage(data: { name: string; order: number; color?: string }) {
-        return prisma.stage.create({ data });
+    async createStage(tenantId: string, data: { name: string; order: number; color?: string }) {
+        return prisma.stage.create({ data: { ...data, tenantId } });
     }
 
-    async updateStage(
-        id: string,
-        data: Partial<{ name: string; order: number; color: string }>
-    ) {
+    async findStageById(id: string, tenantId: string) {
+        return prisma.stage.findFirst({ where: { id, tenantId } });
+    }
+
+    async updateStage(id: string, data: Partial<{ name: string; order: number; color: string }>) {
         return prisma.stage.update({ where: { id }, data });
     }
 
@@ -40,8 +42,9 @@ export class PipelineRepository {
      * Returns all deals grouped by their stage.
      * Includes related client and stage info.
      */
-    async findAllDeals(userId: string) {
+    async findAllDeals(userId: string, tenantId: string) {
         const stages = await prisma.stage.findMany({
+            where: { tenantId },
             orderBy: { order: "asc" },
             include: {
                 deals: {

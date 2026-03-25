@@ -8,6 +8,7 @@ import {
     LayoutDashboard,
     LogOut,
     Settings,
+    Shield,
     Target,
     Users,
 } from "lucide-react";
@@ -25,7 +26,12 @@ const menu = [
 // Sidebar used by all authenticated pages.
 export function Sidebar() {
     const pathname = usePathname();
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
+
+    const menuWithAdmin =
+        user?.role === "ADMIN"
+            ? [...menu, { href: "/admin", label: "Admin", icon: Shield }]
+            : menu;
 
     return (
         <aside className="sticky top-0 flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
@@ -34,12 +40,14 @@ export function Sidebar() {
                     ◎
                 </div>
                 <div>
-                    <p className="text-2xl font-black tracking-tight text-slate-900">NexoCRM</p>
+                    <p className="text-2xl font-black tracking-tight text-slate-900">
+                        {user?.companyName || "Seu CRM"}
+                    </p>
                 </div>
             </div>
 
             <nav className="space-y-1 px-3">
-                {menu.map((item) => {
+                {menuWithAdmin.map((item) => {
                     const Icon = item.icon;
                     const active = pathname === item.href;
                     return (

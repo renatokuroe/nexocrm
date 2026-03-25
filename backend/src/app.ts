@@ -14,6 +14,7 @@ import customFieldsRoutes from "./modules/custom-fields/custom-fields.routes";
 import pipelineRoutes from "./modules/pipeline/pipeline.routes";
 import tasksRoutes from "./modules/tasks/tasks.routes";
 import reportsRoutes from "./modules/reports/reports.routes";
+import adminRoutes from "./modules/admin/admin.routes";
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use(`${API_PREFIX}/custom-fields`, customFieldsRoutes);
 app.use(`${API_PREFIX}/pipeline`, pipelineRoutes);
 app.use(`${API_PREFIX}/tasks`, tasksRoutes);
 app.use(`${API_PREFIX}/reports`, reportsRoutes);
+app.use(`${API_PREFIX}/admin`, adminRoutes);
 
 // 404 handler for unknown routes
 app.use((_req, res) => {

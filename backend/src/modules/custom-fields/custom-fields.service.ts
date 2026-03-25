@@ -7,12 +7,12 @@ type FieldType = "TEXT" | "NUMBER" | "DATE" | "SELECT" | "BOOLEAN";
 export class CustomFieldsService {
     private repository = new CustomFieldsRepository();
 
-    async list() {
-        return this.repository.findAll();
+    async list(tenantId: string) {
+        return this.repository.findAll(tenantId);
     }
 
-    async create(data: { label: string; type: FieldType; visible?: boolean }) {
-        return this.repository.create(data);
+    async create(tenantId: string, data: { label: string; type: FieldType; visible?: boolean }) {
+        return this.repository.create({ ...data, tenantId });
     }
 
     async update(
@@ -26,7 +26,7 @@ export class CustomFieldsService {
         return this.repository.delete(id);
     }
 
-    async reorder(orderedIds: string[]) {
-        return this.repository.reorder(orderedIds);
+    async reorder(tenantId: string, orderedIds: string[]) {
+        return this.repository.reorder(tenantId, orderedIds);
     }
 }

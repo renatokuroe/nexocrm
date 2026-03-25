@@ -17,6 +17,18 @@ export function LoginForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    const companyName =
+        typeof window !== "undefined"
+            ? (() => {
+                try {
+                    const raw = localStorage.getItem("nexo_user");
+                    return raw ? JSON.parse(raw).companyName : null;
+                } catch {
+                    return null;
+                }
+            })()
+            : null;
+
     const onSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -44,7 +56,7 @@ export function LoginForm() {
                 <div className="mb-2 grid h-14 w-14 place-items-center rounded-2xl bg-primary text-2xl text-white">
                     ◎
                 </div>
-                <CardTitle className="text-4xl">NexoCRM</CardTitle>
+                <CardTitle className="text-4xl">{companyName || "Seu CRM"}</CardTitle>
                 <p className="text-lg text-slate-500">Bem-vindo de volta!</p>
             </CardHeader>
 

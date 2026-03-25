@@ -2,6 +2,18 @@
 const nextConfig = {
     // Keep strict mode enabled to catch potential side effects early.
     reactStrictMode: true,
+    async rewrites() {
+        if (process.env.NODE_ENV !== "development") {
+            return [];
+        }
+
+        return [
+            {
+                source: "/api/:path*",
+                destination: "http://localhost:3001/api/:path*",
+            },
+        ];
+    },
     async headers() {
         return [
             {

@@ -3,7 +3,7 @@ import axios from "axios";
 // Centralized API client.
 // The frontend always uses this instance so auth headers and base URL stay consistent.
 export const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
+    baseURL: "/api",
     headers: {
         "Content-Type": "application/json",
     },

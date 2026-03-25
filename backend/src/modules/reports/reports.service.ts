@@ -7,7 +7,7 @@ export class ReportsService {
     /**
      * Returns all KPI metrics needed for dashboard and reports page.
      */
-    async getDashboardStats(userId: string) {
+    async getDashboardStats(userId: string, tenantId: string) {
         const [
             totalClients,
             activeDeals,
@@ -52,6 +52,7 @@ export class ReportsService {
 
             // Deal count per stage
             prisma.stage.findMany({
+                where: { tenantId },
                 orderBy: { order: "asc" },
                 include: {
                     _count: { select: { deals: true } },

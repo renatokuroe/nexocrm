@@ -4,9 +4,11 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { config } from "../../config/app.config";
+import { prisma } from "../../prisma/client";
 import { ConflictError, UnauthorizedError } from "../../utils/errors";
 import { AuthRepository } from "./auth.repository";
 import type { LoginDto, RegisterDto, AuthResponse } from "./auth.types";
+import { seedTenantDefaults } from "../admin/tenant-bootstrap";
 
 export class AuthService {
     private repository: AuthRepository;
@@ -36,12 +38,24 @@ export class AuthService {
             name: dto.name,
             email: dto.email,
             password: hashedPassword,
+            companyName: dto.companyName || dto.name,
         });
 
-        // Sign and return a JWT
-        const token = this.signToken(user);
+        await seedTenantDefaults(prisma, user.tenantId);
 
-        return { token, user };
+        const userPayload = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            tenantId: user.tenantId,
+            companyName: user.tenant.name,
+        };
+
+        // Sign and return a JWT
+        const token = this.signToken(userPayload);
+
+        return { token, user: userPayload };
     }
 
     /**
@@ -65,29 +79,58 @@ export class AuthService {
             throw new UnauthorizedError("Invalid email or password");
         }
 
-        const { password: _pwd, ...safeUser } = user;
-        const token = this.signToken(safeUser);
+        const { password: _pwd, tenant, ...safeUser } = user;
+        const userPayload = {
+            ...safeUser,
+            companyName: tenant.name,
+        };
+        const token = this.signToken(userPayload);
 
-        return { token, user: safeUser };
+        return { token, user: userPayload };
     }
 
     /**
      * Returns the authenticated user's profile.
      */
     async getMe(userId: string) {
-        return this.repository.findById(userId);
+        const user = await this.repository.findById(userId);
+        if (!user) return null;
+
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            tenantId: user.tenantId,
+            companyName: user.tenant.name,
+            createdAt: user.createdAt,
+        };
     }
 
     /**
      * Signs a JWT token with user payload.
      */
-    private signToken(user: { id: string; name: string; email: string }): string {
+    private signToken(user: {
+        id: string;
+        name: string;
+        email: string;
+        role: "ADMIN" | "USER";
+        tenantId: string;
+        companyName: string;
+    }): string {
         const options: jwt.SignOptions = {
             expiresIn: config.jwt.expiresIn as jwt.SignOptions["expiresIn"],
         };
 
         return jwt.sign(
-            { id: user.id, email: user.email, name: user.name },
+            {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                tenantId: user.tenantId,
+                companyName: user.companyName,
+            },
             config.jwt.secret,
             options
         );

@@ -5,6 +5,9 @@ export interface User {
     id: string;
     name: string;
     email: string;
+    role: "ADMIN" | "USER";
+    tenantId: string;
+    companyName: string;
 }
 
 export interface Segment {

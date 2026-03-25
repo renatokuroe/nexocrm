@@ -4,11 +4,12 @@ import { prisma } from "../../prisma/client";
 type FieldType = "TEXT" | "NUMBER" | "DATE" | "SELECT" | "BOOLEAN";
 
 export class CustomFieldsRepository {
-    async findAll() {
-        return prisma.customField.findMany({ orderBy: { order: "asc" } });
+    async findAll(tenantId: string) {
+        return prisma.customField.findMany({ where: { tenantId }, orderBy: { order: "asc" } });
     }
 
     async create(data: {
+        tenantId: string;
         label: string;
         type: FieldType;
         visible?: boolean;
@@ -28,10 +29,10 @@ export class CustomFieldsRepository {
         return prisma.customField.delete({ where: { id } });
     }
 
-    async reorder(orderedIds: string[]) {
+    async reorder(tenantId: string, orderedIds: string[]) {
         // Update order index for each field
         const updates = orderedIds.map((id, idx) =>
-            prisma.customField.update({ where: { id }, data: { order: idx + 1 } })
+            prisma.customField.updateMany({ where: { id, tenantId }, data: { order: idx + 1 } })
         );
         return prisma.$transaction(updates);
     }

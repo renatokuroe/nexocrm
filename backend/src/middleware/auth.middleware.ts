@@ -14,6 +14,9 @@ export interface AuthenticatedRequest extends Request {
         id: string;
         email: string;
         name: string;
+        role: "ADMIN" | "USER";
+        tenantId: string;
+        companyName: string;
     };
 }
 
@@ -40,6 +43,9 @@ export function authenticate(
             id: string;
             email: string;
             name: string;
+            role: "ADMIN" | "USER";
+            tenantId: string;
+            companyName: string;
         };
 
         // Attach user info to the request for downstream handlers
@@ -52,4 +58,16 @@ export function authenticate(
             next(error);
         }
     }
+}
+
+export function requireAdmin(
+    req: AuthenticatedRequest,
+    _res: Response,
+    next: NextFunction
+): void {
+    if (req.user?.role !== "ADMIN") {
+        next(new UnauthorizedError("Admin access required"));
+        return;
+    }
+    next();
 }

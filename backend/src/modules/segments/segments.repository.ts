@@ -2,22 +2,23 @@
 import { prisma } from "../../prisma/client";
 
 export class SegmentsRepository {
-    async findAll() {
+    async findAll(tenantId: string) {
         return prisma.segment.findMany({
+            where: { tenantId },
             include: { _count: { select: { clients: true } } },
             orderBy: { name: "asc" },
         });
     }
 
-    async findById(id: string) {
-        return prisma.segment.findUnique({
-            where: { id },
+    async findById(id: string, tenantId: string) {
+        return prisma.segment.findFirst({
+            where: { id, tenantId },
             include: { _count: { select: { clients: true } } },
         });
     }
 
-    async create(data: { name: string; color: string; description?: string }) {
-        return prisma.segment.create({ data });
+    async create(tenantId: string, data: { name: string; color: string; description?: string }) {
+        return prisma.segment.create({ data: { ...data, tenantId } });
     }
 
     async update(

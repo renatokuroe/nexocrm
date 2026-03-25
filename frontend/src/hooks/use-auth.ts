@@ -1,36 +1,48 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@/types/domain";
 
 // Auth hook centralizes token/user access and auth actions.
 export function useAuth() {
     const router = useRouter();
+    const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
 
-    const token =
-        typeof window !== "undefined" ? localStorage.getItem("nexo_token") : null;
+    useEffect(() => {
+        if (typeof window === "undefined") return;
 
-    const user = useMemo<User | null>(() => {
-        if (typeof window === "undefined") return null;
-        const raw = localStorage.getItem("nexo_user");
-        if (!raw) return null;
+        const savedToken = localStorage.getItem("nexo_token");
+        const rawUser = localStorage.getItem("nexo_user");
+
+        setToken(savedToken);
+
+        if (!rawUser) {
+            setUser(null);
+            return;
+        }
+
         try {
-            return JSON.parse(raw) as User;
+            setUser(JSON.parse(rawUser) as User);
         } catch {
-            return null;
+            setUser(null);
         }
     }, []);
 
     const login = (authToken: string, authUser: User) => {
         localStorage.setItem("nexo_token", authToken);
         localStorage.setItem("nexo_user", JSON.stringify(authUser));
+        setToken(authToken);
+        setUser(authUser);
         router.push("/dashboard");
     };
 
     const logout = () => {
         localStorage.removeItem("nexo_token");
         localStorage.removeItem("nexo_user");
+        setToken(null);
+        setUser(null);
         router.push("/login");
     };
 

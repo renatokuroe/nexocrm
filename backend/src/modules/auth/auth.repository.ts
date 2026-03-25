@@ -11,6 +11,9 @@ export class AuthRepository {
     async findByEmail(email: string) {
         return prisma.user.findUnique({
             where: { email },
+            include: {
+                tenant: { select: { id: true, name: true } },
+            },
         });
     }
 
@@ -21,7 +24,15 @@ export class AuthRepository {
     async findById(id: string) {
         return prisma.user.findUnique({
             where: { id },
-            select: { id: true, name: true, email: true, createdAt: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                tenantId: true,
+                createdAt: true,
+                tenant: { select: { name: true } },
+            },
         });
     }
 
@@ -29,10 +40,26 @@ export class AuthRepository {
      * Create a new user record.
      * Password should be hashed BEFORE calling this method.
      */
-    async create(data: { name: string; email: string; password: string }) {
+    async create(data: { name: string; email: string; password: string; companyName: string }) {
         return prisma.user.create({
-            data,
-            select: { id: true, name: true, email: true },
+            data: {
+                name: data.name,
+                email: data.email,
+                password: data.password,
+                tenant: {
+                    create: {
+                        name: data.companyName,
+                    },
+                },
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                tenantId: true,
+                tenant: { select: { name: true } },
+            },
         });
     }
 }

@@ -28,6 +28,12 @@ const statusLabel: Record<ClientStatus, string> = {
     LEAD: "LEAD",
 };
 
+const baseClientFieldLabels = new Set(["email", "telefone", "empresa"]);
+
+function isBaseClientFieldLabel(label: string): boolean {
+    return baseClientFieldLabels.has(label.trim().toLowerCase());
+}
+
 // Clients view manages searching, filtering, CRUD operations, and dynamic custom fields.
 export function ClientsView() {
     const queryClient = useQueryClient();
@@ -176,9 +182,17 @@ export function ClientsView() {
         },
     });
 
-    const visibleCustomFields = useMemo(
-        () => (customFieldsQuery.data ?? []).filter((f) => f.visible),
+    const dynamicCustomFields = useMemo(
+        () =>
+            (customFieldsQuery.data ?? []).filter(
+                (field) => !isBaseClientFieldLabel(field.label)
+            ),
         [customFieldsQuery.data]
+    );
+
+    const visibleCustomFields = useMemo(
+        () => dynamicCustomFields.filter((field) => field.visible),
+        [dynamicCustomFields]
     );
 
     const onSubmit = (e: FormEvent) => {
@@ -484,7 +498,7 @@ export function ClientsView() {
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
-                        {(customFieldsQuery.data ?? []).map((field) => (
+                        {dynamicCustomFields.map((field) => (
                             <Input
                                 key={field.id}
                                 placeholder={field.label}
@@ -614,7 +628,7 @@ export function ClientsView() {
                         </div>
 
                         <div className="grid gap-3 md:grid-cols-2">
-                            {(customFieldsQuery.data ?? []).map((field) => (
+                            {dynamicCustomFields.map((field) => (
                                 <Input
                                     key={field.id}
                                     placeholder={field.label}

@@ -7,12 +7,12 @@ import type { AuthenticatedRequest } from "../../middleware/auth.middleware";
 export class CustomFieldsController {
     private service = new CustomFieldsService();
 
-    list = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.list()); } catch (e) { next(e); }
+    list = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try { sendSuccess(res, await this.service.list(req.user!.tenantId)); } catch (e) { next(e); }
     };
 
     create = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.create(req.body), "Field created", 201); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.create(req.user!.tenantId, req.body), "Field created", 201); } catch (e) { next(e); }
     };
 
     update = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -24,6 +24,6 @@ export class CustomFieldsController {
     };
 
     reorder = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.reorder(req.body.orderedIds)); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.reorder(req.user!.tenantId, req.body.orderedIds)); } catch (e) { next(e); }
     };
 }

@@ -6,30 +6,38 @@ import type { CreateDealDto, UpdateDealDto } from "./pipeline.types";
 export class PipelineService {
     private repository = new PipelineRepository();
 
-    async getBoard(userId: string) {
-        return this.repository.findAllDeals(userId);
+    async getBoard(userId: string, tenantId: string) {
+        return this.repository.findAllDeals(userId, tenantId);
     }
 
-    async getStages() {
-        return this.repository.findAllStages();
+    async getStages(tenantId: string) {
+        return this.repository.findAllStages(tenantId);
     }
 
-    async createStage(data: { name: string; order: number; color?: string }) {
-        return this.repository.createStage(data);
+    async createStage(tenantId: string, data: { name: string; order: number; color?: string }) {
+        return this.repository.createStage(tenantId, data);
     }
 
     async updateStage(
         id: string,
+        tenantId: string,
         data: Partial<{ name: string; order: number; color: string }>
     ) {
+        const stage = await this.repository.findStageById(id, tenantId);
+        if (!stage) throw new NotFoundError("Stage not found");
         return this.repository.updateStage(id, data);
     }
 
-    async deleteStage(id: string) {
+    async deleteStage(id: string, tenantId: string) {
+        const stage = await this.repository.findStageById(id, tenantId);
+        if (!stage) throw new NotFoundError("Stage not found");
         return this.repository.deleteStage(id);
     }
 
-    async createDeal(userId: string, dto: CreateDealDto) {
+    async createDeal(userId: string, tenantId: string, dto: CreateDealDto) {
+        const stage = await this.repository.findStageById(dto.stageId, tenantId);
+        if (!stage) throw new NotFoundError("Stage not found");
+
         return this.repository.createDeal(userId, {
             ...dto,
             closeDate: dto.closeDate ? new Date(dto.closeDate) : undefined,
@@ -46,9 +54,12 @@ export class PipelineService {
         });
     }
 
-    async moveDeal(id: string, userId: string, stageId: string) {
+    async moveDeal(id: string, userId: string, tenantId: string, stageId: string) {
         const existing = await this.repository.findDealById(id, userId);
         if (!existing) throw new NotFoundError("Deal not found");
+
+        const stage = await this.repository.findStageById(stageId, tenantId);
+        if (!stage) throw new NotFoundError("Stage not found");
 
         return this.repository.updateDeal(id, userId, { stageId });
     }

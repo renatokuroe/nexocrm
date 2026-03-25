@@ -8,6 +8,6 @@ export class ReportsController {
     private service = new ReportsService();
 
     getDashboard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.getDashboardStats(req.user!.id)); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.getDashboardStats(req.user!.id, req.user!.tenantId)); } catch (e) { next(e); }
     };
 }

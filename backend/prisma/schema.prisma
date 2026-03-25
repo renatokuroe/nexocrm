@@ -10,6 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  segments     Segment[]
+  customFields CustomField[]
+  stages       Stage[]
+
+  @@map("tenants")
+}
+
 // ─────────────────────────────────────────────
 // USER MODEL - Authentication & ownership
 // ─────────────────────────────────────────────
@@ -18,8 +32,12 @@ model User {
   name      String
   email     String   @unique
   password  String   // bcrypt hashed
+  role      UserRole @default(USER)
+  tenantId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Relations
   clients Client[]
@@ -27,6 +45,11 @@ model User {
   deals   Deal[]
 
   @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  USER
 }
 
 // ─────────────────────────────────────────────
@@ -74,11 +97,15 @@ model Segment {
   name        String
   color       String   @default("#6366f1") // hex color
   description String?
+  tenantId    String
   createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Many-to-many via join table
   clients ClientSegment[]
 
+  @@index([tenantId])
   @@map("segments")
 }
 
@@ -105,12 +132,16 @@ model CustomField {
   type      FieldType @default(TEXT)
   visible   Boolean   @default(true) // Show in clients table
   order     Int       @default(0)    // Display order
+  tenantId  String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Values associated with this field
   values CustomFieldValue[]
 
+  @@index([tenantId])
   @@map("custom_fields")
 }
 
@@ -146,11 +177,15 @@ model Stage {
   name      String   // e.g. "Prospecção", "Qualificação", "Proposta"
   order     Int      // Column position (left to right)
   color     String   @default("#6366f1")
+  tenantId  String
   createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Deals in this stage
   deals Deal[]
 
+  @@index([tenantId])
   @@map("stages")
 }
 

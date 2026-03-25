@@ -80,6 +80,9 @@ jobs:
             set -a && . ./.env.production && set +a
             docker build -t nexocrm-backend:latest ./backend
 
+            echo "🗄️ Applying Prisma migrations..."
+            docker run --rm --env-file ./.env.production nexocrm-backend:latest npx prisma migrate deploy
+
             echo "🔨 Building frontend image..."
             docker build -t nexocrm-frontend:latest ./frontend
 
