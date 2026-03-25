@@ -90,7 +90,7 @@ jobs:
             echo "✅ Deployment complete!"
 
   notify:
-    needs: [build_and_push, deploy]
+    needs: deploy
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -101,4 +101,3 @@ jobs:
       - name: Notify failure
         if: failure()
         run: echo "❌ Deployment failed. Check logs above."
-deploy
