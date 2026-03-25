@@ -97,15 +97,56 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  notify:
+  deploy:
     needs: build_and_push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/nexocrm
+            
+            echo "📥 Pulling latest code..."
+            git fetch origin
+            git pull --ff-only origin main
+            
+            echo "🔨 Cleaning up old containers..."
+            docker-compose -f docker-compose.prod.yml down --remove-orphans || true
+            
+            echo "🔨 Rebuilding backend..."
+            docker build -t nexocrm-backend:latest ./backend
+            
+            echo "🔨 Rebuilding frontend..."
+            docker build -t nexocrm-frontend:latest ./frontend
+            
+            echo "🚀 Starting services..."
+            set -a && . ./.env.production && set +a
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            echo "✅ Waiting for containers to stabilize..."
+            sleep 5
+            
+            echo "✅ Checking container status..."
+            docker ps -a --filter "name=nexocrm"
+            
+            echo "✅ Deployment complete!"
+
+  notify:
+    needs: [build_and_push, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Notify deployment
+      - name: Notify success
         if: success()
-        run: echo "✅ Images pushed to ECR successfully! Now deploy to your EC2 instance."
+        run: echo "✅ Deployment to EC2 completed successfully!"
         
       - name: Notify failure
         if: failure()
-        run: echo "❌ Build or push failed. Check logs above."
+        run: echo "❌ Deployment failed. Check logs above."
