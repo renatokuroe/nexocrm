@@ -68,19 +68,12 @@ jobs:
             git fetch origin
             git pull --ff-only origin main
             
-            echo "🔨 Cleaning up old containers..."
-            docker container rm -f nexocrm-backend nexocrm-frontend 2>/dev/null || true
-            docker network rm nexocrm_nexo-network 2>/dev/null || true
-            
-            echo "🔨 Rebuilding backend..."
-            docker build -t nexocrm-backend:latest ./backend
-            
-            echo "🔨 Rebuilding frontend..."
-            docker build -t nexocrm-frontend:latest ./frontend
-            
-            echo "🚀 Starting services..."
+            echo "🔨 Building services..."
             set -a && . ./.env.production && set +a
-            docker-compose -f docker-compose.prod.yml up -d
+            docker-compose -f docker-compose.prod.yml build
+
+            echo "🚀 Starting services..."
+            docker-compose -f docker-compose.prod.yml up -d --remove-orphans
 
             echo "🔎 Validating Next.js static assets..."
             ASSET_PATH=$(curl -s http://127.0.0.1:3000/login | grep -o '/_next/static/[^"[:space:]]*layout\.css' | head -n 1 || true)
