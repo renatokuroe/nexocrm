@@ -68,9 +68,12 @@ jobs:
             git fetch origin
             git pull --ff-only origin main
             
-            echo "🔨 Building services..."
+            echo "🔨 Building backend image..."
             set -a && . ./.env.production && set +a
-            docker-compose -f docker-compose.prod.yml build
+            docker build -t nexocrm-backend:latest ./backend
+
+            echo "🔨 Building frontend image..."
+            docker build -t nexocrm-frontend:latest ./frontend
 
             echo "🚀 Starting services..."
             docker-compose -f docker-compose.prod.yml up -d --remove-orphans
