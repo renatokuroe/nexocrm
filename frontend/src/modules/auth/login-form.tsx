@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 // Login form encapsulates auth screen behavior and API integration.
 export function LoginForm() {
     const router = useRouter();
-    const [email, setEmail] = useState("demo@nexocrm.com");
-    const [password, setPassword] = useState("demo123");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
