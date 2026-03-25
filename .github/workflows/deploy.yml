@@ -82,6 +82,15 @@ jobs:
             echo "🚀 Starting services..."
             set -a && . ./.env.production && set +a
             docker-compose -f docker-compose.prod.yml up -d
+
+            echo "🔎 Validating Next.js static assets..."
+            ASSET_PATH=$(curl -s http://127.0.0.1:3000/login | grep -o '/_next/static/[^"[:space:]]*layout\.css' | head -n 1 || true)
+            if [ -n "$ASSET_PATH" ]; then
+              curl -sf "http://127.0.0.1:3000$ASSET_PATH" >/dev/null
+              echo "✅ Next asset available: $ASSET_PATH"
+            else
+              echo "⚠️ Could not extract layout asset path from HTML; continuing."
+            fi
             
             echo "✅ Waiting for containers to stabilize..."
             sleep 5
