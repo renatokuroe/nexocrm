@@ -19,6 +19,11 @@ out/
 .env.production.local
 .env.production
 
+# SSH keys and certificates (NEVER commit)
+*.pem
+*.key
+*.pub
+
 # OS
 .DS_Store
 .AppleDouble
