@@ -2,6 +2,7 @@
 const nextConfig = {
     // Keep strict mode enabled to catch potential side effects early.
     reactStrictMode: true,
+    output: "standalone",
     async rewrites() {
         if (process.env.NODE_ENV !== "development") {
             return [];

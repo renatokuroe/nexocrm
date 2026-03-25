@@ -75,6 +75,12 @@ jobs:
               chmod +x ~/.docker/cli-plugins/docker-compose
             fi
             COMPOSE_CMD="docker compose"
+
+            echo "🧹 Cleaning old Docker artifacts..."
+            docker container prune -f || true
+            docker image prune -af || true
+            docker builder prune -af || true
+            docker volume prune -f || true
             
             echo "🔨 Building backend image..."
             set -a && . ./.env.production && set +a

@@ -15,11 +15,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci --only=production
-
 # Copy built app from builder
-COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
@@ -31,6 +29,9 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1

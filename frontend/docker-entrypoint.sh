@@ -5,4 +5,4 @@ set -eu
 mkdir -p /app/.next/static
 cp -R /opt/next-static/. /app/.next/static/ || true
 
-exec npm run start
+exec node server.js
