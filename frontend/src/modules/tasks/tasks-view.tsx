@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Plus } from "lucide-react";
+import { CalendarClock, Pencil, Plus } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,18 @@ import { Task } from "@/types/domain";
 export function TasksView() {
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
+    const [openEdit, setOpenEdit] = useState(false);
 
     const [form, setForm] = useState({
+        title: "",
+        description: "",
+        dueDate: "",
+        priority: "MEDIUM",
+        clientId: "",
+    });
+
+    const [editForm, setEditForm] = useState({
+        id: "",
         title: "",
         description: "",
         dueDate: "",
@@ -65,9 +75,50 @@ export function TasksView() {
         },
     });
 
+    const updateTask = useMutation({
+        mutationFn: async () => {
+            await api.put(`/tasks/${editForm.id}`, {
+                title: editForm.title,
+                description: editForm.description || undefined,
+                dueDate: editForm.dueDate || undefined,
+                priority: editForm.priority,
+                clientId: editForm.clientId || undefined,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+            setOpenEdit(false);
+            setEditForm({
+                id: "",
+                title: "",
+                description: "",
+                dueDate: "",
+                priority: "MEDIUM",
+                clientId: "",
+            });
+        },
+    });
+
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
         createTask.mutate();
+    };
+
+    const onEditSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        updateTask.mutate();
+    };
+
+    const openEditModal = (task: Task) => {
+        setEditForm({
+            id: task.id,
+            title: task.title,
+            description: task.description || "",
+            dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "",
+            priority: task.priority,
+            clientId: task.clientId || "",
+        });
+        setOpenEdit(true);
     };
 
     return (
@@ -122,6 +173,17 @@ export function TasksView() {
                                 <p className="font-semibold text-primary">
                                     cliente: {task.client?.name || "Nenhum"}
                                 </p>
+                                <div className="mt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="h-8 px-2"
+                                        onClick={() => openEditModal(task)}
+                                    >
+                                        <Pencil className="mr-1 h-3.5 w-3.5" />
+                                        Editar
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -179,6 +241,68 @@ export function TasksView() {
                         </Button>
                         <Button type="submit" disabled={createTask.isPending}>
                             {createTask.isPending ? "Salvando..." : "Salvar"}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal open={openEdit} onOpenChange={setOpenEdit} title="Editar Tarefa">
+                <form className="space-y-3" onSubmit={onEditSubmit}>
+                    <Input
+                        placeholder="Título"
+                        value={editForm.title}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                        required
+                    />
+                    <textarea
+                        className="min-h-[120px] w-full rounded-xl border border-slate-200 p-3"
+                        placeholder="Descrição"
+                        value={editForm.description}
+                        onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, description: e.target.value }))
+                        }
+                    />
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <Input
+                            type="date"
+                            value={editForm.dueDate}
+                            onChange={(e) =>
+                                setEditForm((prev) => ({ ...prev, dueDate: e.target.value }))
+                            }
+                        />
+                        <select
+                            className="h-11 rounded-xl border border-slate-200 bg-white px-3"
+                            value={editForm.priority}
+                            onChange={(e) =>
+                                setEditForm((prev) => ({ ...prev, priority: e.target.value }))
+                            }
+                        >
+                            <option value="LOW">Baixa</option>
+                            <option value="MEDIUM">Média</option>
+                            <option value="HIGH">Alta</option>
+                        </select>
+                    </div>
+
+                    <select
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3"
+                        value={editForm.clientId}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, clientId: e.target.value }))}
+                    >
+                        <option value="">Cliente (opcional)</option>
+                        {(clientsQuery.data ?? []).map((client) => (
+                            <option key={client.id} value={client.id}>
+                                {client.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={() => setOpenEdit(false)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={updateTask.isPending}>
+                            {updateTask.isPending ? "Salvando..." : "Salvar"}
                         </Button>
                     </div>
                 </form>
