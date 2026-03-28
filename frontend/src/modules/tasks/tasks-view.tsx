@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Pencil, Plus } from "lucide-react";
+import { CalendarClock, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,16 @@ export function TasksView() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        },
+    });
+
+    const deleteTask = useMutation({
+        mutationFn: async (id: string) => {
+            await api.delete(`/tasks/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+            setOpenEdit(false);
         },
     });
 
@@ -157,7 +167,7 @@ export function TasksView() {
                                                     : "default"
                                         }
                                     >
-                                        {task.priority}
+                                        {task.priority === "HIGH" ? "Alta" : task.priority === "MEDIUM" ? "Média" : "Baixa"}
                                     </Badge>
                                 </div>
                                 <p className="text-slate-500">{task.description || "Sem descrição"}</p>
@@ -297,13 +307,25 @@ export function TasksView() {
                         ))}
                     </select>
 
-                    <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={() => setOpenEdit(false)}>
-                            Cancelar
+                    <div className="flex items-center justify-between gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            disabled={deleteTask.isPending}
+                            onClick={() => deleteTask.mutate(editForm.id)}
+                        >
+                            <Trash2 className="mr-1.5 h-4 w-4" />
+                            {deleteTask.isPending ? "Excluindo..." : "Excluir"}
                         </Button>
-                        <Button type="submit" disabled={updateTask.isPending}>
-                            {updateTask.isPending ? "Salvando..." : "Salvar"}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" onClick={() => setOpenEdit(false)}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={updateTask.isPending}>
+                                {updateTask.isPending ? "Salvando..." : "Salvar"}
+                            </Button>
+                        </div>
                     </div>
                 </form>
             </Modal>
