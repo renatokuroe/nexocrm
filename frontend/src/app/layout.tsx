@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
+import { BrowserTitleSync } from "@/components/layout/browser-title-sync";
 
 export const metadata: Metadata = {
     title: "NexoCRM",
@@ -12,7 +13,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="pt-BR">
             <body>
-                <QueryProvider>{children}</QueryProvider>
+                <QueryProvider>
+                    <BrowserTitleSync />
+                    {children}
+                </QueryProvider>
             </body>
         </html>
     );
