@@ -15,6 +15,22 @@ export class PipelineController {
         try { sendSuccess(res, await this.service.getStages(req.user!.tenantId)); } catch (e) { next(e); }
     };
 
+    listLabels = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try { sendSuccess(res, await this.service.listLabels(req.user!.tenantId)); } catch (e) { next(e); }
+    };
+
+    createLabel = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try { sendSuccess(res, await this.service.createLabel(req.user!.tenantId, req.body), "Label created", 201); } catch (e) { next(e); }
+    };
+
+    updateLabel = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try { sendSuccess(res, await this.service.updateLabel(req.params.id, req.user!.tenantId, req.body), "Label updated"); } catch (e) { next(e); }
+    };
+
+    deleteLabel = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try { await this.service.deleteLabel(req.params.id, req.user!.tenantId); sendSuccess(res, null, "Label deleted"); } catch (e) { next(e); }
+    };
+
     createStage = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try { sendSuccess(res, await this.service.createStage(req.user!.tenantId, req.body), "Stage created", 201); } catch (e) { next(e); }
     };
@@ -41,5 +57,9 @@ export class PipelineController {
 
     deleteDeal = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try { await this.service.deleteDeal(req.params.id, req.user!.id); sendSuccess(res, null, "Deal deleted"); } catch (e) { next(e); }
+    };
+
+    updateDealLabels = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try { sendSuccess(res, await this.service.updateDealLabels(req.params.id, req.user!.id, req.user!.tenantId, req.body.labels || []), "Deal labels updated"); } catch (e) { next(e); }
     };
 }

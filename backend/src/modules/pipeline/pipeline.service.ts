@@ -1,7 +1,12 @@
 // Pipeline Service
-import { NotFoundError } from "../../utils/errors";
+import { ConflictError, NotFoundError } from "../../utils/errors";
 import { PipelineRepository } from "./pipeline.repository";
-import type { CreateDealDto, UpdateDealDto } from "./pipeline.types";
+import type {
+    CreateDealDto,
+    DealLabelAssignmentDto,
+    LabelDto,
+    UpdateDealDto,
+} from "./pipeline.types";
 
 export class PipelineService {
     private repository = new PipelineRepository();
@@ -12,6 +17,53 @@ export class PipelineService {
 
     async getStages(tenantId: string) {
         return this.repository.findAllStages(tenantId);
+    }
+
+    async listLabels(tenantId: string) {
+        return this.repository.findAllLabels(tenantId);
+    }
+
+    async createLabel(tenantId: string, dto: LabelDto) {
+        const sanitizedName = dto.name.trim();
+        const finalName = sanitizedName;
+
+        if (finalName) {
+            const existing = await this.repository.findAllLabels(tenantId);
+            const normalized = finalName.toLowerCase();
+            if (existing.some((item) => item.name.trim().toLowerCase() === normalized)) {
+                throw new ConflictError("Label already exists");
+            }
+        }
+
+        return this.repository.createLabel(tenantId, {
+            name: finalName,
+            color: dto.color,
+        });
+    }
+
+    async updateLabel(id: string, tenantId: string, dto: Partial<LabelDto>) {
+        const label = await this.repository.findLabelById(id, tenantId);
+        if (!label) throw new NotFoundError("Label not found");
+
+        const nextName = dto.name?.trim();
+        const finalName = nextName;
+        if (finalName && finalName.toLowerCase() !== label.name.trim().toLowerCase()) {
+            const existing = await this.repository.findAllLabels(tenantId);
+            if (existing.some((item) => item.id !== id && item.name.trim().toLowerCase() === finalName.toLowerCase())) {
+                throw new ConflictError("Label already exists");
+            }
+        }
+
+        return this.repository.updateLabel(id, {
+            ...(finalName ? { name: finalName } : {}),
+            ...(dto.color ? { color: dto.color } : {}),
+        });
+    }
+
+    async deleteLabel(id: string, tenantId: string) {
+        const label = await this.repository.findLabelById(id, tenantId);
+        if (!label) throw new NotFoundError("Label not found");
+        await this.repository.deleteLabel(id);
     }
 
     async createStage(tenantId: string, data: { name: string; order: number; color?: string }) {
@@ -68,5 +120,26 @@ export class PipelineService {
         const existing = await this.repository.findDealById(id, userId);
         if (!existing) throw new NotFoundError("Deal not found");
         return this.repository.deleteDeal(id, userId);
+    }
+
+    async updateDealLabels(
+        id: string,
+        userId: string,
+        tenantId: string,
+        labels: DealLabelAssignmentDto[]
+    ) {
+        const existing = await this.repository.findDealById(id, userId);
+        if (!existing) throw new NotFoundError("Deal not found");
+
+        const catalog = await this.repository.findAllLabels(tenantId);
+        const catalogIds = new Set(catalog.map((item) => item.id));
+
+        for (const item of labels) {
+            if (!catalogIds.has(item.labelId)) {
+                throw new NotFoundError("Label not found");
+            }
+        }
+
+        return this.repository.syncDealLabels(id, labels);
     }
 }

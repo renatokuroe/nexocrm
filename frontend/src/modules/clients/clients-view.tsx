@@ -3,7 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Pencil, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { MessageCircle, Pencil, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,28 @@ const baseClientFieldLabels = new Set(["email", "telefone", "empresa"]);
 
 function isBaseClientFieldLabel(label: string): boolean {
     return baseClientFieldLabels.has(label.trim().toLowerCase());
+}
+
+function formatBrazilPhone(raw: string): string {
+    const digits = raw.replace(/\D/g, "").slice(0, 11);
+
+    if (digits.length <= 2) return digits ? `(${digits}` : "";
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function normalizeBrazilPhone(raw: string): string {
+    return raw.replace(/\D/g, "").slice(0, 11);
+}
+
+function buildWhatsAppLink(phone: string): string | null {
+    const normalized = normalizeBrazilPhone(phone);
+    if (normalized.length < 10) return null;
+    return `https://wa.me/55${normalized}`;
 }
 
 // Clients view manages searching, filtering, CRUD operations, and dynamic custom fields.
@@ -108,7 +130,7 @@ export function ClientsView() {
             await api.post("/clients", {
                 name: form.name,
                 email: form.email || undefined,
-                phone: form.phone || undefined,
+                phone: form.phone ? normalizeBrazilPhone(form.phone) : undefined,
                 company: form.company || undefined,
                 status: form.status,
                 leadSource: form.leadSource || undefined,
@@ -209,7 +231,7 @@ export function ClientsView() {
             id: client.id,
             name: client.name,
             email: client.email || "",
-            phone: client.phone || "",
+            phone: formatBrazilPhone(client.phone || ""),
             company: client.company || "",
             status: client.status,
             leadSource: client.leadSource || "",
@@ -231,7 +253,7 @@ export function ClientsView() {
                 payload: {
                     name: editingClient.name,
                     email: editingClient.email || undefined,
-                    phone: editingClient.phone || undefined,
+                    phone: editingClient.phone ? normalizeBrazilPhone(editingClient.phone) : undefined,
                     company: editingClient.company || undefined,
                     status: editingClient.status,
                     leadSource: editingClient.leadSource || undefined,
@@ -406,6 +428,24 @@ export function ClientsView() {
                                                 </td>
                                             ))}
                                             <td className="px-4 py-3 text-right">
+                                                {buildWhatsAppLink(client.phone || "") ? (
+                                                    <a
+                                                        className="mr-1 inline-flex rounded-lg p-2 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                                        href={buildWhatsAppLink(client.phone || "") || undefined}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        aria-label="Enviar mensagem no WhatsApp"
+                                                    >
+                                                        <MessageCircle className="h-4 w-4" />
+                                                    </a>
+                                                ) : (
+                                                    <span
+                                                        className="mr-1 inline-flex rounded-lg p-2 text-slate-300"
+                                                        aria-label="Cliente sem telefone para WhatsApp"
+                                                    >
+                                                        <MessageCircle className="h-4 w-4" />
+                                                    </span>
+                                                )}
                                                 <button
                                                     className="mr-1 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                                                     onClick={() => openEditModal(client)}
@@ -457,7 +497,7 @@ export function ClientsView() {
                         <Input
                             placeholder="Telefone"
                             value={form.phone}
-                            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                            onChange={(e) => setForm((prev) => ({ ...prev, phone: formatBrazilPhone(e.target.value) }))}
                         />
                         <Input
                             placeholder="Origem do lead"
@@ -577,7 +617,7 @@ export function ClientsView() {
                                 value={editingClient.phone}
                                 onChange={(e) =>
                                     setEditingClient((prev) =>
-                                        prev ? { ...prev, phone: e.target.value } : prev
+                                        prev ? { ...prev, phone: formatBrazilPhone(e.target.value) } : prev
                                     )
                                 }
                             />

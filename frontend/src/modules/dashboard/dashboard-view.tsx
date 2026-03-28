@@ -5,6 +5,7 @@ import { Activity, DollarSign, ListTodo, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
+import { DashboardInsightsPanel } from "./dashboard-insights-panel";
 
 // Dashboard view aggregates KPIs and recent activity cards.
 export function DashboardView() {
@@ -64,6 +65,8 @@ export function DashboardView() {
                     );
                 })}
             </div>
+
+            <DashboardInsightsPanel insights={data?.insights ?? []} />
 
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
                 <Card>

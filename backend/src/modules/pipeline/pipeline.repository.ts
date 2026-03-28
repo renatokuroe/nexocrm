@@ -3,8 +3,20 @@
 import { prisma } from "../../prisma/client";
 
 const DEAL_INCLUDE = {
-    client: { select: { id: true, name: true, company: true } },
+    client: { select: { id: true, name: true, company: true, phone: true } },
     stage: { select: { id: true, name: true, color: true } },
+    labels: {
+        include: {
+            label: {
+                select: {
+                    id: true,
+                    name: true,
+                    color: true,
+                },
+            },
+        },
+        orderBy: { createdAt: "asc" as const },
+    },
 };
 
 export class PipelineRepository {
@@ -34,6 +46,34 @@ export class PipelineRepository {
 
     async deleteStage(id: string) {
         return prisma.stage.delete({ where: { id } });
+    }
+
+    async findAllLabels(tenantId: string) {
+        return prisma.label.findMany({
+            where: { tenantId },
+            orderBy: { name: "asc" },
+        });
+    }
+
+    async findLabelById(id: string, tenantId: string) {
+        return prisma.label.findFirst({ where: { id, tenantId } });
+    }
+
+    async createLabel(tenantId: string, data: { name: string; color: string }) {
+        return prisma.label.create({
+            data: { ...data, tenantId },
+        });
+    }
+
+    async updateLabel(id: string, data: { name?: string; color?: string }) {
+        return prisma.label.update({
+            where: { id },
+            data,
+        });
+    }
+
+    async deleteLabel(id: string) {
+        return prisma.label.delete({ where: { id } });
     }
 
     // ── Deals ─────────────────────────────────────────────────────────────
@@ -102,5 +142,46 @@ export class PipelineRepository {
 
     async deleteDeal(id: string, userId: string) {
         return prisma.deal.delete({ where: { id, userId } });
+    }
+
+    async syncDealLabels(
+        dealId: string,
+        labels: { labelId: string }[]
+    ) {
+        return prisma.$transaction(async (tx) => {
+            const labelIds = labels.map((item) => item.labelId);
+
+            if (labelIds.length > 0) {
+                await tx.dealLabel.deleteMany({
+                    where: {
+                        dealId,
+                        labelId: { notIn: labelIds },
+                    },
+                });
+            } else {
+                await tx.dealLabel.deleteMany({ where: { dealId } });
+            }
+
+            for (const item of labels) {
+                await tx.dealLabel.upsert({
+                    where: {
+                        dealId_labelId: {
+                            dealId,
+                            labelId: item.labelId,
+                        },
+                    },
+                    create: {
+                        dealId,
+                        labelId: item.labelId,
+                    },
+                    update: {},
+                });
+            }
+
+            return tx.deal.findUnique({
+                where: { id: dealId },
+                include: DEAL_INCLUDE,
+            });
+        });
     }
 }

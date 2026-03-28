@@ -20,6 +20,7 @@ model Tenant {
   segments     Segment[]
   customFields CustomField[]
   stages       Stage[]
+  labels       Label[]
 
   @@map("tenants")
 }
@@ -208,10 +209,42 @@ model Deal {
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
   userId   String
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  labels   DealLabel[]
 
   @@index([stageId])
   @@index([userId])
   @@map("deals")
+}
+
+model Label {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deals  DealLabel[]
+
+  @@index([tenantId])
+  @@unique([tenantId, name])
+  @@map("labels")
+}
+
+model DealLabel {
+  dealId     String
+  labelId    String
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  deal  Deal  @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([dealId, labelId])
+  @@index([labelId])
+  @@map("deal_labels")
 }
 
 // ─────────────────────────────────────────────
