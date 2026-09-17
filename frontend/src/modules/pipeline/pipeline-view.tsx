@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Eye, MessageCircle, Pencil, Plus, Search, Trash2, User } from "lucide-react";
+import { Calendar, Clipboard, Eye, MessageCircle, Pencil, Plus, Search, Trash2, User } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -118,6 +118,39 @@ export function PipelineView() {
         () => (clientsQuery.data ?? []).find((client) => client.id === detailForm.clientId),
         [clientsQuery.data, detailForm.clientId]
     );
+
+    const copySelectedClientData = async () => {
+        if (!selectedClient) return;
+
+        const segments = selectedClient.segments.map(({ segment }) => segment.name).join(", ");
+        const customFields = selectedClient.customFieldValues
+            .map(({ customField, value }) => `${customField.label}: ${value || "-"}`)
+            .join("\n");
+        const text = [
+            `Nome: ${selectedClient.name || "-"}`,
+            `Email: ${selectedClient.email || "-"}`,
+            `Telefone: ${selectedClient.phone || "-"}`,
+            `Empresa: ${selectedClient.company || "-"}`,
+            `Categoria: ${selectedClient.category || "-"}`,
+            `Site: ${selectedClient.website || "-"}`,
+            `Endereço completo: ${selectedClient.address || "-"}`,
+            `Cidade: ${selectedClient.city || "-"}`,
+            `Estado: ${selectedClient.state || "-"}`,
+            `CNPJ: ${selectedClient.cnpj || "-"}`,
+            `Razão social: ${selectedClient.legalName || "-"}`,
+            `Rating: ${selectedClient.rating ?? "-"}`,
+            `Número de reviews: ${selectedClient.reviewCount ?? "-"}`,
+            `Porte da empresa: ${selectedClient.companySize || "-"}`,
+            `Capital social: ${selectedClient.socialCapital ?? "-"}`,
+            `Status: ${selectedClient.status || "-"}`,
+            `Origem do lead: ${selectedClient.leadSource || "-"}`,
+            `Observações: ${selectedClient.notes || "-"}`,
+            `Segmentos: ${segments || "-"}`,
+            customFields ? `Campos personalizados:\n${customFields}` : "",
+        ].filter(Boolean).join("\n");
+
+        await navigator.clipboard.writeText(text);
+    };
 
     const labelsQuery = useQuery({
         queryKey: ["pipeline-labels"],
@@ -579,17 +612,6 @@ export function PipelineView() {
                                         setDetailForm((prev) => ({ ...prev, value: formatBRL(parsed) }));
                                     }}
                                 />
-                                {selectedClient ? (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="mt-2 w-full"
-                                        onClick={() => setOpenClientInfoModal(true)}
-                                    >
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        Ver dados do cliente
-                                    </Button>
-                                ) : null}
                             </div>
                             <div className="rounded-2xl border border-slate-200 p-4">
                                 <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Previsão</p>
@@ -727,19 +749,27 @@ export function PipelineView() {
                         </div>
 
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                                onClick={() => {
-                                    if (!selectedDeal || !window.confirm("Excluir esta negociação?")) return;
-                                    deleteDeal.mutate(selectedDeal.id);
-                                }}
-                                disabled={deleteDeal.isPending}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {deleteDeal.isPending ? "Excluindo..." : "Excluir negociação"}
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedClient ? (
+                                    <Button type="button" variant="outline" onClick={() => setOpenClientInfoModal(true)}>
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        Ver dados do cliente
+                                    </Button>
+                                ) : null}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                    onClick={() => {
+                                        if (!selectedDeal || !window.confirm("Excluir esta negociação?")) return;
+                                        deleteDeal.mutate(selectedDeal.id);
+                                    }}
+                                    disabled={deleteDeal.isPending}
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {deleteDeal.isPending ? "Excluindo..." : "Excluir negociação"}
+                                </Button>
+                            </div>
                             <div className="flex gap-2">
                             <Button type="button" variant="outline" onClick={() => setOpenDetailModal(false)}>
                                 Cancelar
@@ -815,6 +845,12 @@ export function PipelineView() {
                                 ))}
                             </div>
                         ) : null}
+                        <div className="flex justify-end border-t border-slate-200 pt-4">
+                            <Button type="button" variant="outline" onClick={copySelectedClientData}>
+                                <Clipboard className="mr-2 h-4 w-4" />
+                                Copiar dados
+                            </Button>
+                        </div>
                     </div>
                 ) : null}
             </Modal>
