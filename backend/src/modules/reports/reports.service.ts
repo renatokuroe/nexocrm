@@ -22,8 +22,8 @@ export class ReportsService {
         const now = new Date();
         const staleClientsCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.staleClientsDays * MS_PER_DAY);
         const stalledDealsCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.stalledDealsDays * MS_PER_DAY);
-            const activeDealsWhere = {
-                user: { tenantId },
+        const urgentCloseCutoff = new Date(now.getTime() + DASHBOARD_INSIGHT_RULES.urgentCloseWindowDays * MS_PER_DAY);
+        const leadWithoutActionCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.leadWithoutActionDays * MS_PER_DAY);
         const activeDealsWhere = {
             user: { tenantId },
             stage: { name: { notIn: [...DASHBOARD_INSIGHT_RULES.closedStageNames] } },
@@ -41,7 +41,7 @@ export class ReportsService {
             stalledDeals,
             urgentClosings,
             lowValueDeals,
-                prisma.client.count({ where: { user: { tenantId } } }),
+            leadFollowUps,
         ] = await Promise.all([
             // Total clients count
             prisma.client.count({ where: { user: { tenantId } } }),
@@ -53,14 +53,13 @@ export class ReportsService {
                 },
             }),
 
-                        user: { tenantId },
             prisma.deal.aggregate({
                 where: {
                     user: { tenantId },
                     stage: { name: "Fechado (Ganho)" },
                 },
                 _sum: { value: true },
-                prisma.task.count({ where: { user: { tenantId }, completed: false } }),
+            }),
 
             // Pending tasks
             prisma.task.count({ where: { user: { tenantId }, completed: false } }),
@@ -78,7 +77,6 @@ export class ReportsService {
             // Deal count per stage
             prisma.stage.findMany({
                 where: { tenantId },
-                        deals: { where: { user: { tenantId } }, select: { value: true } },
                 include: {
                     _count: { select: { deals: true } },
                     deals: { where: { user: { tenantId } }, select: { value: true } },
