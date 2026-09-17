@@ -14,7 +14,7 @@ async function bootstrap() {
 
         // Start Express server
         const server = app.listen(config.port, () => {
-            console.log(`🚀 NexoCRM API running at http://localhost:${config.port}`);
+            console.log(`🚀 V4 NK & Co. CRM API running at http://localhost:${config.port}`);
             console.log(`📚 Environment: ${config.nodeEnv}`);
         });
 

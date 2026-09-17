@@ -45,7 +45,7 @@ export function DashboardInsightsPanel({ insights }: { insights: DashboardInsigh
     const totalAlerts = insights.reduce((sum, insight) => sum + insight.count, 0);
 
     return (
-        <Card className="mb-6 overflow-hidden border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.10),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f8fbff_100%)]">
+        <Card className="mb-6 overflow-hidden border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(255,0,0,0.10),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#fff8f8_100%)]">
             <CardHeader className="border-b border-slate-200/80">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>

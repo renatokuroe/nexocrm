@@ -1,4 +1,4 @@
-// Prisma Schema for NexoCRM
+// Prisma Schema for V4 NK & Co. CRM
 // Defines all database models, relations, and enums
 
 generator client {
@@ -96,7 +96,7 @@ enum ClientStatus {
 model Segment {
   id          String   @id @default(cuid())
   name        String
-  color       String   @default("#6366f1") // hex color
+  color       String   @default("#ff0000") // hex color
   description String?
   tenantId    String
   createdAt   DateTime @default(now())
@@ -177,7 +177,7 @@ model Stage {
   id        String   @id @default(cuid())
   name      String   // e.g. "Prospecção", "Qualificação", "Proposta"
   order     Int      // Column position (left to right)
-  color     String   @default("#6366f1")
+  color     String   @default("#ff0000")
   tenantId  String
   createdAt DateTime @default(now())
 

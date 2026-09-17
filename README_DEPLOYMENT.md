@@ -1,6 +1,6 @@
-# 🚀 NexoCRM - Complete Deployment Guide
+# 🚀 V4 NK & Co. CRM - Complete Deployment Guide
 
-Bem-vindo! Este diretório contém tudo que você precisa para fazer deploy da sua aplicação NexoCRM em produção na AWS.
+Bem-vindo! Este diretório contém tudo que você precisa para fazer deploy da sua aplicação V4 NK & Co. CRM em produção na AWS.
 
 ## 📚 Documentação disponível
 

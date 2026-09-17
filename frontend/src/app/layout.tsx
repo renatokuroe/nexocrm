@@ -4,7 +4,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { BrowserTitleSync } from "@/components/layout/browser-title-sync";
 
 export const metadata: Metadata = {
-    title: "NexoCRM",
+    title: "V4 NK & Co. CRM",
     description: "Scalable CRM built with Next.js, TypeScript, Prisma, and clean architecture.",
 };
 

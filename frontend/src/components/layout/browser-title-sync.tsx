@@ -8,7 +8,7 @@ export function BrowserTitleSync() {
     const { user } = useAuth();
 
     useEffect(() => {
-        const fallbackTitle = "NexoCRM";
+        const fallbackTitle = "V4 NK & Co. CRM";
         const nextTitle = user?.companyName?.trim() || fallbackTitle;
         document.title = nextTitle;
     }, [user?.companyName]);

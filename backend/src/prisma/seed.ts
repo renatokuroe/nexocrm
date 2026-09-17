@@ -13,7 +13,7 @@ async function main() {
 
     const admin = await prisma.user.findUnique({ where: { email: "admin@nexocrm.com" } });
     if (!admin) {
-        const adminTenant = await prisma.tenant.create({ data: { name: "NexoCRM Admin" } });
+        const adminTenant = await prisma.tenant.create({ data: { name: "V4 NK & Co. CRM Admin" } });
         await prisma.user.create({
             data: {
                 name: "Platform Admin",

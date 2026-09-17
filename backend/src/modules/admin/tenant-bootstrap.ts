@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 
 const defaultStages = [
-    { name: "Prospecção", order: 1, color: "#6366f1" },
-    { name: "Qualificação", order: 2, color: "#8b5cf6" },
+    { name: "Prospecção", order: 1, color: "#ff0000" },
+    { name: "Qualificação", order: 2, color: "#ff0000" },
     { name: "Proposta", order: 3, color: "#f59e0b" },
     { name: "Negociação", order: 4, color: "#f97316" },
     { name: "Fechado (Ganho)", order: 5, color: "#10b981" },

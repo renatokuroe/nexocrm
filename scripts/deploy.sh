@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 NexoCRM Deployment Script${NC}"
+echo -e "${BLUE}🚀 V4 NK & Co. CRM Deployment Script${NC}"
 echo -e "${BLUE}================================${NC}\n"
 
 # Check Docker installation

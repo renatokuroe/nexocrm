@@ -52,9 +52,28 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: nexocrm-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+    networks:
+      - nexo-network
+
 networks:
   nexo-network:
     driver: bridge
 
 volumes:
   frontend-next-static:
+  caddy_data:
+  caddy_config:
