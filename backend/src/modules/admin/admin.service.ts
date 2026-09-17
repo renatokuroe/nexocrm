@@ -8,23 +8,21 @@ import type { CreateTenantUserDto, UpdateTenantUserDto } from "./admin.types";
 export class AdminService {
     private repository = new AdminRepository();
 
-    async listUsers() {
-        return this.repository.listUsers();
+    async listUsers(tenantId: string) {
+        return this.repository.listUsers(tenantId);
     }
 
-    async createTenantUser(dto: CreateTenantUserDto) {
+    async createTenantUser(tenantId: string, dto: CreateTenantUserDto) {
         const existing = await this.repository.findByEmail(dto.email);
         if (existing) {
             throw new ConflictError("Email already registered");
         }
 
         const hashedPassword = await bcrypt.hash(dto.password, 12);
-        const { tenant, user } = await this.repository.createTenantUser({
+        const { user } = await this.repository.createTenantUser(tenantId, {
             ...dto,
             password: hashedPassword,
         });
-
-        await seedTenantDefaults(prisma, tenant.id);
 
         return {
             id: user.id,
@@ -57,7 +55,6 @@ export class AdminService {
             name: dto.name,
             email: dto.email,
             password,
-            companyName: dto.companyName,
         });
 
         if (!updated) {
@@ -67,13 +64,13 @@ export class AdminService {
         return updated;
     }
 
-    async deleteTenantUser(requestedByUserId: string, targetUserId: string) {
+    async deleteTenantUser(requestedByUserId: string, tenantId: string, targetUserId: string) {
         if (requestedByUserId === targetUserId) {
             throw new ForbiddenError("You cannot delete your own admin user");
         }
 
         const target = await this.repository.findById(targetUserId);
-        if (!target) {
+        if (!target || target.tenantId !== tenantId) {
             throw new NotFoundError("User not found");
         }
 

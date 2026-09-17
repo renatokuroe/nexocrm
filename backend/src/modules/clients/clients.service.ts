@@ -19,17 +19,17 @@ export class ClientsService {
     /**
      * Returns a paginated list of clients with applied filters.
      */
-    async list(userId: string, filters: ClientFilters) {
+    async list(tenantId: string, filters: ClientFilters) {
         const page = Number(filters.page) || 1;
         const limit = Math.min(Number(filters.limit) || 20, 100); // cap at 100
-        return this.repository.findAll(userId, { ...filters, page, limit });
+        return this.repository.findAll(tenantId, { ...filters, page, limit });
     }
 
     /**
      * Returns a single client or throws 404.
      */
-    async getById(id: string, userId: string) {
-        const client = await this.repository.findById(id, userId);
+    async getById(id: string, tenantId: string) {
+        const client = await this.repository.findById(id, tenantId);
         if (!client) {
             throw new NotFoundError(`Client not found`);
         }
@@ -54,9 +54,9 @@ export class ClientsService {
     /**
      * Updates an existing client, ensuring it belongs to the user.
      */
-    async update(id: string, userId: string, dto: UpdateClientDto) {
+    async update(id: string, tenantId: string, dto: UpdateClientDto) {
         // Verify ownership first
-        await this.getById(id, userId);
+        await this.getById(id, tenantId);
 
         const { segmentIds, customFields, ...clientData } = dto;
 
@@ -65,14 +65,14 @@ export class ClientsService {
             birthday: dto.birthday ? new Date(dto.birthday) : undefined,
         };
 
-        return this.repository.update(id, userId, data, segmentIds, customFields);
+        return this.repository.update(id, tenantId, data, segmentIds, customFields);
     }
 
     /**
      * Deletes a client, ensuring it belongs to the user.
      */
-    async delete(id: string, userId: string) {
-        await this.getById(id, userId);
-        return this.repository.delete(id, userId);
+    async delete(id: string, tenantId: string) {
+        await this.getById(id, tenantId);
+        return this.repository.delete(id, tenantId);
     }
 }

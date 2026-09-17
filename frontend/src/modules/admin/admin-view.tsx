@@ -32,14 +32,12 @@ export function AdminView() {
         name: "",
         email: "",
         password: "",
-        companyName: "",
     });
     const [editForm, setEditForm] = useState({
         id: "",
         name: "",
         email: "",
         password: "",
-        companyName: "",
     });
 
     const usersQuery = useQuery({
@@ -62,7 +60,7 @@ export function AdminView() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin-users"] });
             setOpen(false);
-            setForm({ name: "", email: "", password: "", companyName: "" });
+            setForm({ name: "", email: "", password: "" });
         },
     });
 
@@ -72,13 +70,12 @@ export function AdminView() {
                 name: editForm.name,
                 email: editForm.email,
                 password: editForm.password || undefined,
-                companyName: editForm.companyName,
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin-users"] });
             setOpenEdit(false);
-            setEditForm({ id: "", name: "", email: "", password: "", companyName: "" });
+            setEditForm({ id: "", name: "", email: "", password: "" });
         },
     });
 
@@ -107,7 +104,6 @@ export function AdminView() {
             name: row.name,
             email: row.email,
             password: "",
-            companyName: row.tenant?.name ?? "",
         });
         setOpenEdit(true);
     };
@@ -225,7 +221,7 @@ export function AdminView() {
                 open={open}
                 onOpenChange={setOpen}
                 title="Novo Usuário"
-                description="Criar um novo cliente/tenant com ambiente isolado."
+                description="Adicionar um colaborador ao mesmo CRM e à mesma base de leads."
             >
                 <form className="space-y-3" onSubmit={onSubmit}>
                     <Input
@@ -246,12 +242,6 @@ export function AdminView() {
                         placeholder="Senha"
                         value={form.password}
                         onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-                        required
-                    />
-                    <Input
-                        placeholder="Nome da empresa"
-                        value={form.companyName}
-                        onChange={(e) => setForm((prev) => ({ ...prev, companyName: e.target.value }))}
                         required
                     />
 
@@ -291,12 +281,6 @@ export function AdminView() {
                         placeholder="Nova senha (opcional)"
                         value={editForm.password}
                         onChange={(e) => setEditForm((prev) => ({ ...prev, password: e.target.value }))}
-                    />
-                    <Input
-                        placeholder="Nome da empresa"
-                        value={editForm.companyName}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, companyName: e.target.value }))}
-                        required
                     />
 
                     <div className="flex justify-end gap-2">

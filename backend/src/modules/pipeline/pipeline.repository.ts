@@ -82,13 +82,13 @@ export class PipelineRepository {
      * Returns all deals grouped by their stage.
      * Includes related client and stage info.
      */
-    async findAllDeals(userId: string, tenantId: string) {
+    async findAllDeals(tenantId: string) {
         const stages = await prisma.stage.findMany({
             where: { tenantId },
             orderBy: { order: "asc" },
             include: {
                 deals: {
-                    where: { userId },
+                    where: { user: { tenantId } },
                     include: DEAL_INCLUDE,
                     orderBy: { createdAt: "asc" },
                 },
@@ -97,15 +97,15 @@ export class PipelineRepository {
         return stages;
     }
 
-    async findDealById(id: string, userId: string) {
+    async findDealById(id: string, tenantId: string) {
         return prisma.deal.findFirst({
-            where: { id, userId },
+            where: { id, user: { tenantId } },
             include: DEAL_INCLUDE,
         });
     }
 
     async createDeal(
-        userId: string,
+        tenantId: string,
         data: {
             title: string;
             value?: number;
@@ -133,15 +133,17 @@ export class PipelineRepository {
             clientId: string;
         }>
     ) {
-        return prisma.deal.update({
-            where: { id, userId },
+        const deal = await prisma.deal.findFirst({ where: { id, user: { tenantId } } });
+        return deal ? prisma.deal.update({
+            where: { id },
             data,
             include: DEAL_INCLUDE,
-        });
+        }) : null;
     }
 
-    async deleteDeal(id: string, userId: string) {
-        return prisma.deal.delete({ where: { id, userId } });
+    async deleteDeal(id: string, tenantId: string) {
+        const deal = await prisma.deal.findFirst({ where: { id, user: { tenantId } } });
+        return deal ? prisma.deal.delete({ where: { id } }) : null;
     }
 
     async syncDealLabels(

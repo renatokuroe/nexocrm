@@ -8,7 +8,7 @@ export class AdminController {
 
     listUsers = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
-            sendSuccess(res, await this.service.listUsers());
+            sendSuccess(res, await this.service.listUsers(req.user!.tenantId));
         } catch (e) {
             next(e);
         }
@@ -16,7 +16,7 @@ export class AdminController {
 
     createUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
-            sendSuccess(res, await this.service.createTenantUser(req.body), "User created", 201);
+            sendSuccess(res, await this.service.createTenantUser(req.user!.tenantId, req.body), "User created", 201);
         } catch (e) {
             next(e);
         }
@@ -32,7 +32,7 @@ export class AdminController {
 
     deleteUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
-            await this.service.deleteTenantUser(req.user!.id, req.params.id);
+            await this.service.deleteTenantUser(req.user!.id, req.user!.tenantId, req.params.id);
             sendSuccess(res, null, "User deleted");
         } catch (e) {
             next(e);

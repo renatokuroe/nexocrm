@@ -1,8 +1,9 @@
 import { prisma } from "../../prisma/client";
 
 export class AdminRepository {
-    async listUsers() {
+    async listUsers(tenantId: string) {
         return prisma.user.findMany({
+            where: { tenantId },
             orderBy: { createdAt: "desc" },
             select: {
                 id: true,
@@ -43,24 +44,18 @@ export class AdminRepository {
         });
     }
 
-    async createTenantUser(data: {
+    async createTenantUser(tenantId: string, data: {
         name: string;
         email: string;
         password: string;
-        companyName: string;
     }) {
-        return prisma.$transaction(async (tx) => {
-            const tenant = await tx.tenant.create({
-                data: { name: data.companyName },
-            });
-
-            const user = await tx.user.create({
+        const user = await prisma.user.create({
                 data: {
                     name: data.name,
                     email: data.email,
                     password: data.password,
                     role: "USER",
-                    tenantId: tenant.id,
+                    tenantId,
                 },
                 select: {
                     id: true,
@@ -72,8 +67,7 @@ export class AdminRepository {
                 },
             });
 
-            return { tenant, user };
-        });
+        return { user };
     }
 
     async updateTenantUser(
@@ -103,13 +97,6 @@ export class AdminRepository {
                 },
             });
 
-            if (data.companyName !== undefined) {
-                await tx.tenant.update({
-                    where: { id: user.tenantId },
-                    data: { name: data.companyName },
-                });
-            }
-
             return tx.user.findUnique({
                 where: { id },
                 select: {
@@ -126,18 +113,6 @@ export class AdminRepository {
     }
 
     async deleteTenantUser(id: string) {
-        return prisma.$transaction(async (tx) => {
-            const user = await tx.user.findUnique({
-                where: { id },
-                select: { id: true, tenantId: true },
-            });
-
-            if (!user) return null;
-
-            await tx.user.delete({ where: { id } });
-            await tx.tenant.delete({ where: { id: user.tenantId } });
-
-            return user;
-        });
+        return prisma.user.delete({ where: { id } });
     }
 }

@@ -20,7 +20,7 @@ export class ClientsController {
     ): Promise<void> => {
         try {
             const { total, clients } = await this.service.list(
-                req.user!.id,
+                req.user!.tenantId,
                 req.query as any
             );
             const page = Number(req.query.page) || 1;
@@ -38,7 +38,7 @@ export class ClientsController {
         next: NextFunction
     ): Promise<void> => {
         try {
-            const client = await this.service.getById(req.params.id, req.user!.id);
+            const client = await this.service.getById(req.params.id, req.user!.tenantId);
             sendSuccess(res, client);
         } catch (error) {
             next(error);
@@ -68,7 +68,7 @@ export class ClientsController {
         try {
             const client = await this.service.update(
                 req.params.id,
-                req.user!.id,
+                req.user!.tenantId,
                 req.body
             );
             sendSuccess(res, client, "Client updated successfully");
@@ -84,7 +84,7 @@ export class ClientsController {
         next: NextFunction
     ): Promise<void> => {
         try {
-            await this.service.delete(req.params.id, req.user!.id);
+            await this.service.delete(req.params.id, req.user!.tenantId);
             sendSuccess(res, null, "Client deleted successfully");
         } catch (error) {
             next(error);

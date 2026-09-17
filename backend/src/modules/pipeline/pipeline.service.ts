@@ -11,8 +11,8 @@ import type {
 export class PipelineService {
     private repository = new PipelineRepository();
 
-    async getBoard(userId: string, tenantId: string) {
-        return this.repository.findAllDeals(userId, tenantId);
+    async getBoard(tenantId: string) {
+        return this.repository.findAllDeals(tenantId);
     }
 
     async getStages(tenantId: string) {
@@ -96,30 +96,30 @@ export class PipelineService {
         });
     }
 
-    async updateDeal(id: string, userId: string, dto: UpdateDealDto) {
-        const existing = await this.repository.findDealById(id, userId);
+    async updateDeal(id: string, tenantId: string, dto: UpdateDealDto) {
+        const existing = await this.repository.findDealById(id, tenantId);
         if (!existing) throw new NotFoundError("Deal not found");
 
-        return this.repository.updateDeal(id, userId, {
+        return this.repository.updateDeal(id, tenantId, {
             ...dto,
             closeDate: dto.closeDate ? new Date(dto.closeDate) : undefined,
         });
     }
 
     async moveDeal(id: string, userId: string, tenantId: string, stageId: string) {
-        const existing = await this.repository.findDealById(id, userId);
+        const existing = await this.repository.findDealById(id, tenantId);
         if (!existing) throw new NotFoundError("Deal not found");
 
         const stage = await this.repository.findStageById(stageId, tenantId);
         if (!stage) throw new NotFoundError("Stage not found");
 
-        return this.repository.updateDeal(id, userId, { stageId });
+        return this.repository.updateDeal(id, tenantId, { stageId });
     }
 
-    async deleteDeal(id: string, userId: string) {
-        const existing = await this.repository.findDealById(id, userId);
+    async deleteDeal(id: string, tenantId: string) {
+        const existing = await this.repository.findDealById(id, tenantId);
         if (!existing) throw new NotFoundError("Deal not found");
-        return this.repository.deleteDeal(id, userId);
+        return this.repository.deleteDeal(id, tenantId);
     }
 
     async updateDealLabels(
@@ -128,7 +128,7 @@ export class PipelineService {
         tenantId: string,
         labels: DealLabelAssignmentDto[]
     ) {
-        const existing = await this.repository.findDealById(id, userId);
+        const existing = await this.repository.findDealById(id, tenantId);
         if (!existing) throw new NotFoundError("Deal not found");
 
         const catalog = await this.repository.findAllLabels(tenantId);

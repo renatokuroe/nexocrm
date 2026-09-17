@@ -25,7 +25,7 @@ export class ClientsRepository {
     /**
      * Fetch a paginated, filtered list of clients for a given user.
      */
-    async findAll(userId: string, filters: ClientFilters) {
+    async findAll(tenantId: string, filters: ClientFilters) {
         const {
             search,
             status,
@@ -38,7 +38,7 @@ export class ClientsRepository {
 
         // Build dynamic WHERE clause
         const where: Record<string, unknown> = {
-            userId,
+            user: { tenantId },
             ...(status && { status }),
             // Filter by segment via join table
             ...(segmentId && {
@@ -73,9 +73,9 @@ export class ClientsRepository {
     /**
      * Fetch a single client by ID (scoped to user).
      */
-    async findById(id: string, userId: string) {
+    async findById(id: string, tenantId: string) {
         return prisma.client.findFirst({
-            where: { id, userId },
+            where: { id, user: { tenantId } },
             include: CLIENT_INCLUDE,
         });
     }
@@ -124,7 +124,7 @@ export class ClientsRepository {
      */
     async update(
         id: string,
-        userId: string,
+        tenantId: string,
         data: {
             name?: string;
             email?: string;
@@ -139,6 +139,9 @@ export class ClientsRepository {
         customFields?: { fieldId: string; value: string }[]
     ) {
         return prisma.$transaction(async (tx: any) => {
+            const client = await tx.client.findFirst({ where: { id, user: { tenantId } } });
+            if (!client) return null;
+
             // Replace segments if provided
             if (segmentIds !== undefined) {
                 await tx.clientSegment.deleteMany({ where: { clientId: id } });
@@ -165,7 +168,7 @@ export class ClientsRepository {
 
             // Update base client fields
             return tx.client.update({
-                where: { id, userId },
+                where: { id },
                 data,
                 include: CLIENT_INCLUDE,
             });
@@ -175,19 +178,18 @@ export class ClientsRepository {
     /**
      * Delete a client by ID (cascades to segments, tasks, field values).
      */
-    async delete(id: string, userId: string) {
-        return prisma.client.delete({
-            where: { id, userId },
-        });
+    async delete(id: string, tenantId: string) {
+        const client = await prisma.client.findFirst({ where: { id, user: { tenantId } } });
+        return client ? prisma.client.delete({ where: { id } }) : null;
     }
 
     /**
      * Count clients recently created (last 30 days) for dashboard stats.
      */
-    async countByStatus(userId: string) {
+    async countByStatus(tenantId: string) {
         return prisma.client.groupBy({
             by: ["status"],
-            where: { userId },
+            where: { user: { tenantId } },
             _count: true,
         });
     }

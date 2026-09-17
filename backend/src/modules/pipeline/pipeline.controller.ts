@@ -8,7 +8,7 @@ export class PipelineController {
     private service = new PipelineService();
 
     getBoard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.getBoard(req.user!.id, req.user!.tenantId)); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.getBoard(req.user!.tenantId)); } catch (e) { next(e); }
     };
 
     getStages = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -48,7 +48,7 @@ export class PipelineController {
     };
 
     updateDeal = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.updateDeal(req.params.id, req.user!.id, req.body)); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.updateDeal(req.params.id, req.user!.tenantId, req.body)); } catch (e) { next(e); }
     };
 
     moveDeal = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -56,7 +56,7 @@ export class PipelineController {
     };
 
     deleteDeal = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { await this.service.deleteDeal(req.params.id, req.user!.id); sendSuccess(res, null, "Deal deleted"); } catch (e) { next(e); }
+        try { await this.service.deleteDeal(req.params.id, req.user!.tenantId); sendSuccess(res, null, "Deal deleted"); } catch (e) { next(e); }
     };
 
     updateDealLabels = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

@@ -9,7 +9,7 @@ const TASK_INCLUDE = {
 
 export class TasksRepository {
     async findAll(
-        userId: string,
+        tenantId: string,
         filters: {
             completed?: boolean;
             priority?: TaskPriority;
@@ -17,7 +17,7 @@ export class TasksRepository {
         } = {}
     ) {
         const where: Record<string, unknown> = {
-            userId,
+            user: { tenantId },
             ...(filters.completed !== undefined && { completed: filters.completed }),
             ...(filters.priority && { priority: filters.priority }),
             ...(filters.clientId && { clientId: filters.clientId }),
@@ -30,8 +30,8 @@ export class TasksRepository {
         });
     }
 
-    async findById(id: string, userId: string) {
-        return prisma.task.findFirst({ where: { id, userId }, include: TASK_INCLUDE });
+    async findById(id: string, tenantId: string) {
+        return prisma.task.findFirst({ where: { id, user: { tenantId } }, include: TASK_INCLUDE });
     }
 
     async create(
@@ -52,7 +52,7 @@ export class TasksRepository {
 
     async update(
         id: string,
-        userId: string,
+        tenantId: string,
         data: Partial<{
             title: string;
             description: string;
@@ -62,18 +62,20 @@ export class TasksRepository {
             clientId: string;
         }>
     ) {
-        return prisma.task.update({
-            where: { id, userId },
+        const task = await prisma.task.findFirst({ where: { id, user: { tenantId } } });
+        return task ? prisma.task.update({
+            where: { id },
             data,
             include: TASK_INCLUDE,
-        });
+        }) : null;
     }
 
-    async delete(id: string, userId: string) {
-        return prisma.task.delete({ where: { id, userId } });
+    async delete(id: string, tenantId: string) {
+        const task = await prisma.task.findFirst({ where: { id, user: { tenantId } } });
+        return task ? prisma.task.delete({ where: { id } }) : null;
     }
 
-    async countPending(userId: string) {
-        return prisma.task.count({ where: { userId, completed: false } });
+    async countPending(tenantId: string) {
+        return prisma.task.count({ where: { user: { tenantId }, completed: false } });
     }
 }

@@ -18,14 +18,14 @@ export class ReportsService {
     /**
      * Returns all KPI metrics needed for dashboard and reports page.
      */
-    async getDashboardStats(userId: string, tenantId: string) {
+    async getDashboardStats(_userId: string, tenantId: string) {
         const now = new Date();
         const staleClientsCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.staleClientsDays * MS_PER_DAY);
         const stalledDealsCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.stalledDealsDays * MS_PER_DAY);
-        const urgentCloseCutoff = new Date(now.getTime() + DASHBOARD_INSIGHT_RULES.urgentCloseWindowDays * MS_PER_DAY);
-        const leadWithoutActionCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.leadWithoutActionDays * MS_PER_DAY);
+            const activeDealsWhere = {
+                user: { tenantId },
         const activeDealsWhere = {
-            userId,
+            user: { tenantId },
             stage: { name: { notIn: [...DASHBOARD_INSIGHT_RULES.closedStageNames] } },
         };
 
@@ -41,10 +41,10 @@ export class ReportsService {
             stalledDeals,
             urgentClosings,
             lowValueDeals,
-            leadFollowUps,
+                prisma.client.count({ where: { user: { tenantId } } }),
         ] = await Promise.all([
             // Total clients count
-            prisma.client.count({ where: { userId } }),
+            prisma.client.count({ where: { user: { tenantId } } }),
 
             // Active deals (not closed)
             prisma.deal.count({
@@ -53,21 +53,21 @@ export class ReportsService {
                 },
             }),
 
-            // Revenue from won deals
+                        user: { tenantId },
             prisma.deal.aggregate({
                 where: {
-                    userId,
+                    user: { tenantId },
                     stage: { name: "Fechado (Ganho)" },
                 },
                 _sum: { value: true },
-            }),
+                prisma.task.count({ where: { user: { tenantId }, completed: false } }),
 
             // Pending tasks
-            prisma.task.count({ where: { userId, completed: false } }),
+            prisma.task.count({ where: { user: { tenantId }, completed: false } }),
 
             // Recent 5 clients
             prisma.client.findMany({
-                where: { userId },
+                where: { user: { tenantId } },
                 orderBy: { createdAt: "desc" },
                 take: 5,
                 include: {
@@ -78,10 +78,10 @@ export class ReportsService {
             // Deal count per stage
             prisma.stage.findMany({
                 where: { tenantId },
-                orderBy: { order: "asc" },
+                        deals: { where: { user: { tenantId } }, select: { value: true } },
                 include: {
                     _count: { select: { deals: true } },
-                    deals: { where: { userId }, select: { value: true } },
+                    deals: { where: { user: { tenantId } }, select: { value: true } },
                 },
             }),
 
@@ -92,7 +92,8 @@ export class ReportsService {
           SUM(d.value) AS revenue
         FROM deals d
         INNER JOIN stages s ON d.stageId = s.id
-        WHERE d.userId = ${userId}
+        INNER JOIN users u ON d.userId = u.id
+        WHERE u.tenantId = ${tenantId}
           AND s.name = 'Fechado (Ganho)'
           AND d.closeDate >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
         GROUP BY DATE_FORMAT(d.closeDate, '%Y-%m')
@@ -101,7 +102,7 @@ export class ReportsService {
 
             prisma.client.findMany({
                 where: {
-                    userId,
+                    user: { tenantId },
                     status: { in: ["ACTIVE", "LEAD"] },
                     updatedAt: { lte: staleClientsCutoff },
                 },
@@ -159,7 +160,7 @@ export class ReportsService {
 
             prisma.client.findMany({
                 where: {
-                    userId,
+                    user: { tenantId },
                     status: "LEAD",
                     OR: [
                         { updatedAt: { lte: leadWithoutActionCutoff } },
@@ -180,9 +181,9 @@ export class ReportsService {
         ]);
 
         // Calculate conversion rate (won / total)
-        const totalDeals = await prisma.deal.count({ where: { userId } });
+        const totalDeals = await prisma.deal.count({ where: { user: { tenantId } } });
         const wonDeals = await prisma.deal.count({
-            where: { userId, stage: { name: "Fechado (Ganho)" } },
+            where: { user: { tenantId }, stage: { name: "Fechado (Ganho)" } },
         });
 
         // Average ticket (total revenue / won deals)

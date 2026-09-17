@@ -16,10 +16,10 @@ export class TasksService {
     private repository = new TasksRepository();
 
     async list(
-        userId: string,
+        tenantId: string,
         filters: { completed?: string; priority?: TaskPriority; clientId?: string }
     ) {
-        return this.repository.findAll(userId, {
+        return this.repository.findAll(tenantId, {
             ...filters,
             completed:
                 filters.completed !== undefined
@@ -37,27 +37,27 @@ export class TasksService {
 
     async update(
         id: string,
-        userId: string,
+        tenantId: string,
         dto: Partial<CreateTaskDto & { completed: boolean }>
     ) {
-        const existing = await this.repository.findById(id, userId);
+        const existing = await this.repository.findById(id, tenantId);
         if (!existing) throw new NotFoundError("Task not found");
 
-        return this.repository.update(id, userId, {
+        return this.repository.update(id, tenantId, {
             ...dto,
             dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         });
     }
 
-    async toggle(id: string, userId: string) {
-        const existing = await this.repository.findById(id, userId);
+    async toggle(id: string, tenantId: string) {
+        const existing = await this.repository.findById(id, tenantId);
         if (!existing) throw new NotFoundError("Task not found");
-        return this.repository.update(id, userId, { completed: !existing.completed });
+        return this.repository.update(id, tenantId, { completed: !existing.completed });
     }
 
-    async delete(id: string, userId: string) {
-        const existing = await this.repository.findById(id, userId);
+    async delete(id: string, tenantId: string) {
+        const existing = await this.repository.findById(id, tenantId);
         if (!existing) throw new NotFoundError("Task not found");
-        return this.repository.delete(id, userId);
+        return this.repository.delete(id, tenantId);
     }
 }
