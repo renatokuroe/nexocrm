@@ -114,23 +114,58 @@ export class ClientsRepository {
         segmentIds: string[] = [],
         customFields: { fieldId: string; value: string }[] = []
     ) {
-        return prisma.client.create({
-            data: {
-                ...data,
-                user: { connect: { id: userId } },
-                // Create segment associations via join table
-                segments: {
-                    create: segmentIds.map((segmentId) => ({ segmentId })),
+        return prisma.$transaction(async (tx) => {
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+                select: { tenantId: true },
+            });
+
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            const firstStage = await tx.stage.findFirst({
+                where: { tenantId: user.tenantId },
+                orderBy: { order: "asc" },
+                select: { id: true },
+            });
+
+            if (!firstStage) {
+                throw new Error("No pipeline stage configured for this tenant");
+            }
+
+            const client = await tx.client.create({
+                data: {
+                    ...data,
+                    user: { connect: { id: userId } },
+                    // Create segment associations via join table
+                    segments: {
+                        create: segmentIds.map((segmentId) => ({ segmentId })),
+                    },
+                    // Create custom field values
+                    customFieldValues: {
+                        create: customFields.map((cf) => ({
+                            value: cf.value,
+                            customFieldId: cf.fieldId,
+                        })),
+                    },
                 },
-                // Create custom field values
-                customFieldValues: {
-                    create: customFields.map((cf) => ({
-                        value: cf.value,
-                        customFieldId: cf.fieldId,
-                    })),
+            });
+
+            await tx.deal.create({
+                data: {
+                    title: client.name,
+                    value: 0,
+                    stageId: firstStage.id,
+                    clientId: client.id,
+                    userId,
                 },
-            },
-            include: CLIENT_INCLUDE,
+            });
+
+            return tx.client.findUniqueOrThrow({
+                where: { id: client.id },
+                include: CLIENT_INCLUDE,
+            });
         });
     }
 
