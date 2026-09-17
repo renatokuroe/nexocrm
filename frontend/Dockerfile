@@ -34,6 +34,6 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/login', (r) => {if (r.statusCode >= 500) throw new Error(r.statusCode)})" || exit 1
+    CMD node -e "require('http').get('http://127.0.0.1:3000/login', (r) => {if (r.statusCode >= 500) throw new Error(r.statusCode)})" || exit 1
 
 CMD ["docker-entrypoint.sh"]
