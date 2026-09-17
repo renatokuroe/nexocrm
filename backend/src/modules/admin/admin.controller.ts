@@ -6,7 +6,7 @@ import { AdminService } from "./admin.service";
 export class AdminController {
     private service = new AdminService();
 
-    listUsers = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    listUsers = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
             sendSuccess(res, await this.service.listUsers(req.user!.tenantId));
         } catch (e) {

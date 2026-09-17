@@ -105,7 +105,7 @@ export class PipelineRepository {
     }
 
     async createDeal(
-        tenantId: string,
+        userId: string,
         data: {
             title: string;
             value?: number;
@@ -123,7 +123,7 @@ export class PipelineRepository {
 
     async updateDeal(
         id: string,
-        userId: string,
+        tenantId: string,
         data: Partial<{
             title: string;
             value: number;
