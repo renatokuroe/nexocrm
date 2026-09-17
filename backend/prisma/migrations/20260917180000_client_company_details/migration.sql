@@ -1,0 +1,12 @@
+ALTER TABLE `clients`
+    ADD COLUMN `category` VARCHAR(191) NULL,
+    ADD COLUMN `website` VARCHAR(191) NULL,
+    ADD COLUMN `address` TEXT NULL,
+    ADD COLUMN `city` VARCHAR(191) NULL,
+    ADD COLUMN `state` VARCHAR(191) NULL,
+    ADD COLUMN `cnpj` VARCHAR(191) NULL,
+    ADD COLUMN `legalName` VARCHAR(191) NULL,
+    ADD COLUMN `rating` DOUBLE NULL,
+    ADD COLUMN `reviewCount` INTEGER NULL,
+    ADD COLUMN `companySize` VARCHAR(191) NULL,
+    ADD COLUMN `socialCapital` DOUBLE NULL;

@@ -62,6 +62,17 @@ model Client {
   email      String?
   phone      String?
   company    String?
+  category   String?
+  website    String?
+  address    String?  @db.Text
+  city       String?
+  state      String?
+  cnpj       String?
+  legalName  String?
+  rating     Float?
+  reviewCount Int?
+  companySize String?
+  socialCapital Float?
   status     ClientStatus @default(ACTIVE)
   leadSource String?      // e.g. "Instagram", "Google", "Indicação"
   birthday   DateTime?

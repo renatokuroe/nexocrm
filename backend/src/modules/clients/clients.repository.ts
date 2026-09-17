@@ -51,6 +51,11 @@ export class ClientsRepository {
                     { email: { contains: search } },
                     { phone: { contains: search } },
                     { company: { contains: search } },
+                    { category: { contains: search } },
+                    { city: { contains: search } },
+                    { state: { contains: search } },
+                    { cnpj: { contains: search } },
+                    { legalName: { contains: search } },
                 ],
             }),
         };
@@ -90,6 +95,17 @@ export class ClientsRepository {
             email?: string;
             phone?: string;
             company?: string;
+            category?: string;
+            website?: string;
+            address?: string;
+            city?: string;
+            state?: string;
+            cnpj?: string;
+            legalName?: string;
+            rating?: number;
+            reviewCount?: number;
+            companySize?: string;
+            socialCapital?: number;
             status?: "ACTIVE" | "INACTIVE" | "LEAD";
             leadSource?: string;
             birthday?: Date;
@@ -130,6 +146,17 @@ export class ClientsRepository {
             email?: string;
             phone?: string;
             company?: string;
+            category?: string;
+            website?: string;
+            address?: string;
+            city?: string;
+            state?: string;
+            cnpj?: string;
+            legalName?: string;
+            rating?: number;
+            reviewCount?: number;
+            companySize?: string;
+            socialCapital?: number;
             status?: "ACTIVE" | "INACTIVE" | "LEAD";
             leadSource?: string;
             birthday?: Date;

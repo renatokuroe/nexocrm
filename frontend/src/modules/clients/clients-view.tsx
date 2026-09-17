@@ -30,6 +30,20 @@ const statusLabel: Record<ClientStatus, string> = {
 
 const baseClientFieldLabels = new Set(["email", "telefone", "empresa"]);
 
+const emptyClientFields = {
+    category: "",
+    website: "",
+    address: "",
+    city: "",
+    state: "",
+    cnpj: "",
+    legalName: "",
+    rating: "",
+    reviewCount: "",
+    companySize: "",
+    socialCapital: "",
+};
+
 function isBaseClientFieldLabel(label: string): boolean {
     return baseClientFieldLabels.has(label.trim().toLowerCase());
 }
@@ -73,6 +87,7 @@ export function ClientsView() {
         email: "",
         phone: "",
         company: "",
+        ...emptyClientFields,
         status: "ACTIVE",
         leadSource: "",
         birthday: "",
@@ -87,6 +102,17 @@ export function ClientsView() {
         email: string;
         phone: string;
         company: string;
+        category: string;
+        website: string;
+        address: string;
+        city: string;
+        state: string;
+        cnpj: string;
+        legalName: string;
+        rating: string;
+        reviewCount: string;
+        companySize: string;
+        socialCapital: string;
         status: ClientStatus;
         leadSource: string;
         birthday: string;
@@ -132,6 +158,17 @@ export function ClientsView() {
                 email: form.email || undefined,
                 phone: form.phone ? normalizeBrazilPhone(form.phone) : undefined,
                 company: form.company || undefined,
+                category: form.category || undefined,
+                website: form.website || undefined,
+                address: form.address || undefined,
+                city: form.city || undefined,
+                state: form.state || undefined,
+                cnpj: form.cnpj || undefined,
+                legalName: form.legalName || undefined,
+                rating: form.rating ? Number(form.rating) : undefined,
+                reviewCount: form.reviewCount ? Number(form.reviewCount) : undefined,
+                companySize: form.companySize || undefined,
+                socialCapital: form.socialCapital ? Number(form.socialCapital) : undefined,
                 status: form.status,
                 leadSource: form.leadSource || undefined,
                 birthday: form.birthday || undefined,
@@ -150,6 +187,7 @@ export function ClientsView() {
                 email: "",
                 phone: "",
                 company: "",
+                ...emptyClientFields,
                 status: "ACTIVE",
                 leadSource: "",
                 birthday: "",
@@ -180,6 +218,17 @@ export function ClientsView() {
                 email?: string;
                 phone?: string;
                 company?: string;
+                category?: string;
+                website?: string;
+                address?: string;
+                city?: string;
+                state?: string;
+                cnpj?: string;
+                legalName?: string;
+                rating?: number;
+                reviewCount?: number;
+                companySize?: string;
+                socialCapital?: number;
                 status?: ClientStatus;
                 leadSource?: string;
                 birthday?: string;
@@ -233,6 +282,17 @@ export function ClientsView() {
             email: client.email || "",
             phone: formatBrazilPhone(client.phone || ""),
             company: client.company || "",
+            category: client.category || "",
+            website: client.website || "",
+            address: client.address || "",
+            city: client.city || "",
+            state: client.state || "",
+            cnpj: client.cnpj || "",
+            legalName: client.legalName || "",
+            rating: client.rating?.toString() || "",
+            reviewCount: client.reviewCount?.toString() || "",
+            companySize: client.companySize || "",
+            socialCapital: client.socialCapital?.toString() || "",
             status: client.status,
             leadSource: client.leadSource || "",
             birthday: client.birthday ? client.birthday.slice(0, 10) : "",
@@ -255,6 +315,17 @@ export function ClientsView() {
                     email: editingClient.email || undefined,
                     phone: editingClient.phone ? normalizeBrazilPhone(editingClient.phone) : undefined,
                     company: editingClient.company || undefined,
+                    category: editingClient.category || undefined,
+                    website: editingClient.website || undefined,
+                    address: editingClient.address || undefined,
+                    city: editingClient.city || undefined,
+                    state: editingClient.state || undefined,
+                    cnpj: editingClient.cnpj || undefined,
+                    legalName: editingClient.legalName || undefined,
+                    rating: editingClient.rating ? Number(editingClient.rating) : undefined,
+                    reviewCount: editingClient.reviewCount ? Number(editingClient.reviewCount) : undefined,
+                    companySize: editingClient.companySize || undefined,
+                    socialCapital: editingClient.socialCapital ? Number(editingClient.socialCapital) : undefined,
                     status: editingClient.status,
                     leadSource: editingClient.leadSource || undefined,
                     birthday: editingClient.birthday || undefined,
@@ -506,6 +577,20 @@ export function ClientsView() {
                         />
                     </div>
 
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <Input placeholder="Categoria" value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} />
+                        <Input placeholder="Site" type="url" value={form.website} onChange={(e) => setForm((prev) => ({ ...prev, website: e.target.value }))} />
+                        <Input placeholder="Endereço completo" value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} />
+                        <Input placeholder="Cidade" value={form.city} onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))} />
+                        <Input placeholder="Estado" value={form.state} onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))} />
+                        <Input placeholder="CNPJ" value={form.cnpj} onChange={(e) => setForm((prev) => ({ ...prev, cnpj: e.target.value }))} />
+                        <Input placeholder="Razão social" value={form.legalName} onChange={(e) => setForm((prev) => ({ ...prev, legalName: e.target.value }))} />
+                        <Input placeholder="Porte da empresa" value={form.companySize} onChange={(e) => setForm((prev) => ({ ...prev, companySize: e.target.value }))} />
+                        <Input placeholder="Rating" type="number" min="0" step="0.1" value={form.rating} onChange={(e) => setForm((prev) => ({ ...prev, rating: e.target.value }))} />
+                        <Input placeholder="Número de reviews" type="number" min="0" step="1" value={form.reviewCount} onChange={(e) => setForm((prev) => ({ ...prev, reviewCount: e.target.value }))} />
+                        <Input placeholder="Capital social" type="number" min="0" step="0.01" value={form.socialCapital} onChange={(e) => setForm((prev) => ({ ...prev, socialCapital: e.target.value }))} />
+                    </div>
+
                     <div>
                         <p className="mb-2 text-sm font-semibold text-slate-600">Segmentos</p>
                         <div className="flex flex-wrap gap-2">
@@ -630,6 +715,20 @@ export function ClientsView() {
                                     )
                                 }
                             />
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <Input placeholder="Categoria" value={editingClient.category} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, category: e.target.value } : prev)} />
+                            <Input placeholder="Site" type="url" value={editingClient.website} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, website: e.target.value } : prev)} />
+                            <Input placeholder="Endereço completo" value={editingClient.address} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, address: e.target.value } : prev)} />
+                            <Input placeholder="Cidade" value={editingClient.city} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, city: e.target.value } : prev)} />
+                            <Input placeholder="Estado" value={editingClient.state} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, state: e.target.value } : prev)} />
+                            <Input placeholder="CNPJ" value={editingClient.cnpj} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, cnpj: e.target.value } : prev)} />
+                            <Input placeholder="Razão social" value={editingClient.legalName} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, legalName: e.target.value } : prev)} />
+                            <Input placeholder="Porte da empresa" value={editingClient.companySize} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, companySize: e.target.value } : prev)} />
+                            <Input placeholder="Rating" type="number" min="0" step="0.1" value={editingClient.rating} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, rating: e.target.value } : prev)} />
+                            <Input placeholder="Número de reviews" type="number" min="0" step="1" value={editingClient.reviewCount} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, reviewCount: e.target.value } : prev)} />
+                            <Input placeholder="Capital social" type="number" min="0" step="0.01" value={editingClient.socialCapital} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, socialCapital: e.target.value } : prev)} />
                         </div>
 
                         <div>
