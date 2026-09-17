@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, MessageCircle, Pencil, Plus, Search, Trash2, User } from "lucide-react";
+import { Calendar, Eye, MessageCircle, Pencil, Plus, Search, Trash2, User } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,7 @@ export function PipelineView() {
     const draggingDealIdRef = useRef("");
     const [openCreateModal, setOpenCreateModal] = useState(false);
     const [openDetailModal, setOpenDetailModal] = useState(false);
+    const [openClientInfoModal, setOpenClientInfoModal] = useState(false);
     const [selectedDeal, setSelectedDeal] = useState<BoardDeal | null>(null);
     const [labelSearch, setLabelSearch] = useState("");
     const [labelEditor, setLabelEditor] = useState({
@@ -112,6 +113,11 @@ export function PipelineView() {
             return response.data.data as Client[];
         },
     });
+
+    const selectedClient = useMemo(
+        () => (clientsQuery.data ?? []).find((client) => client.id === detailForm.clientId),
+        [clientsQuery.data, detailForm.clientId]
+    );
 
     const labelsQuery = useQuery({
         queryKey: ["pipeline-labels"],
@@ -573,6 +579,17 @@ export function PipelineView() {
                                         setDetailForm((prev) => ({ ...prev, value: formatBRL(parsed) }));
                                     }}
                                 />
+                                {selectedClient ? (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="mt-2 w-full"
+                                        onClick={() => setOpenClientInfoModal(true)}
+                                    >
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        Ver dados do cliente
+                                    </Button>
+                                ) : null}
                             </div>
                             <div className="rounded-2xl border border-slate-200 p-4">
                                 <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Previsão</p>
@@ -733,6 +750,72 @@ export function PipelineView() {
                             </div>
                         </div>
                     </form>
+                ) : null}
+            </Modal>
+
+            <Modal
+                open={openClientInfoModal}
+                onOpenChange={setOpenClientInfoModal}
+                title="Dados do cliente"
+                description="Todas as informações disponíveis para este lead."
+            >
+                {selectedClient ? (
+                    <div className="max-h-[65vh] space-y-4 overflow-y-auto text-sm">
+                        <div className="grid gap-3 md:grid-cols-2">
+                            {[
+                                ["Nome", selectedClient.name],
+                                ["Email", selectedClient.email],
+                                ["Telefone", selectedClient.phone],
+                                ["Empresa", selectedClient.company],
+                                ["Categoria", selectedClient.category],
+                                ["Site", selectedClient.website],
+                                ["Endereço completo", selectedClient.address],
+                                ["Cidade", selectedClient.city],
+                                ["Estado", selectedClient.state],
+                                ["CNPJ", selectedClient.cnpj],
+                                ["Razão social", selectedClient.legalName],
+                                ["Rating", selectedClient.rating],
+                                ["Número de reviews", selectedClient.reviewCount],
+                                ["Porte da empresa", selectedClient.companySize],
+                                ["Capital social", selectedClient.socialCapital],
+                                ["Status", selectedClient.status],
+                                ["Origem do lead", selectedClient.leadSource],
+                            ].map(([label, value]) => (
+                                <div key={label} className="rounded-xl border border-slate-200 p-3">
+                                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
+                                    <p className="mt-1 break-words font-semibold text-slate-800">{value || "-"}</p>
+                                </div>
+                            ))}
+                        </div>
+                        {selectedClient.notes ? (
+                            <div className="rounded-xl border border-slate-200 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Observações</p>
+                                <p className="mt-1 whitespace-pre-wrap text-slate-700">{selectedClient.notes}</p>
+                            </div>
+                        ) : null}
+                        {selectedClient.segments.length > 0 ? (
+                            <div>
+                                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">Segmentos</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedClient.segments.map(({ segment }) => (
+                                        <span key={segment.id} className="rounded-full px-3 py-1 text-xs font-bold" style={{ backgroundColor: `${segment.color}1A`, color: segment.color }}>
+                                            {segment.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null}
+                        {selectedClient.customFieldValues.length > 0 ? (
+                            <div className="grid gap-3 md:grid-cols-2">
+                                {selectedClient.customFieldValues.map(({ customField, value }) => (
+                                    <div key={customField.id} className="rounded-xl border border-slate-200 p-3">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{customField.label}</p>
+                                        <p className="mt-1 break-words font-semibold text-slate-800">{value || "-"}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
                 ) : null}
             </Modal>
         </section>

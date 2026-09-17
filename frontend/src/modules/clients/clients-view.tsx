@@ -3,7 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dialog from "@radix-ui/react-dialog";
-import { MessageCircle, Pencil, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Check, Clipboard, MessageCircle, Pencil, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,7 @@ export function ClientsView() {
     const [openEditClientModal, setOpenEditClientModal] = useState(false);
     const [openFieldsModal, setOpenFieldsModal] = useState(false);
     const [quickEdit, setQuickEdit] = useState<QuickEditState | null>(null);
+    const [copiedClientData, setCopiedClientData] = useState(false);
 
     // Form state for creating clients with dynamic fields.
     const [form, setForm] = useState({
@@ -343,6 +344,45 @@ export function ClientsView() {
                 },
             }
         );
+    };
+
+    const copyClientData = async () => {
+        if (!editingClient) return;
+
+        const customFields = dynamicCustomFields
+            .map((field) => `${field.label}: ${editingClient.customFieldValues[field.id] || "-"}`)
+            .join("\n");
+        const segments = editingClient.segmentIds
+            .map((id) => segmentsQuery.data?.find((segment) => segment.id === id)?.name)
+            .filter(Boolean)
+            .join(", ");
+        const text = [
+            `Nome: ${editingClient.name || "-"}`,
+            `Email: ${editingClient.email || "-"}`,
+            `Telefone: ${editingClient.phone || "-"}`,
+            `Empresa: ${editingClient.company || "-"}`,
+            `Categoria: ${editingClient.category || "-"}`,
+            `Site: ${editingClient.website || "-"}`,
+            `Endereço completo: ${editingClient.address || "-"}`,
+            `Cidade: ${editingClient.city || "-"}`,
+            `Estado: ${editingClient.state || "-"}`,
+            `CNPJ: ${editingClient.cnpj || "-"}`,
+            `Razão social: ${editingClient.legalName || "-"}`,
+            `Rating: ${editingClient.rating || "-"}`,
+            `Número de reviews: ${editingClient.reviewCount || "-"}`,
+            `Porte da empresa: ${editingClient.companySize || "-"}`,
+            `Capital social: ${editingClient.socialCapital || "-"}`,
+            `Status: ${statusLabel[editingClient.status]}`,
+            `Origem do lead: ${editingClient.leadSource || "-"}`,
+            `Aniversário: ${editingClient.birthday || "-"}`,
+            `Observações: ${editingClient.notes || "-"}`,
+            `Segmentos: ${segments || "-"}`,
+            customFields ? `Campos personalizados:\n${customFields}` : "",
+        ].filter(Boolean).join("\n");
+
+        await navigator.clipboard.writeText(text);
+        setCopiedClientData(true);
+        window.setTimeout(() => setCopiedClientData(false), 2000);
     };
 
     return (
@@ -667,68 +707,29 @@ export function ClientsView() {
             >
                 {editingClient && (
                     <form className="space-y-4" onSubmit={onEditSubmit}>
-                        <Input
-                            placeholder="Nome completo"
-                            value={editingClient.name}
-                            onChange={(e) =>
-                                setEditingClient((prev) =>
-                                    prev ? { ...prev, name: e.target.value } : prev
-                                )
-                            }
-                            required
-                        />
+                        <label className="block space-y-1 text-sm font-semibold text-slate-600">
+                            Nome completo
+                            <Input value={editingClient.name} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, name: e.target.value } : prev)} required />
+                        </label>
                         <div className="grid gap-3 md:grid-cols-2">
-                            <Input
-                                placeholder="Empresa"
-                                value={editingClient.company}
-                                onChange={(e) =>
-                                    setEditingClient((prev) =>
-                                        prev ? { ...prev, company: e.target.value } : prev
-                                    )
-                                }
-                            />
-                            <Input
-                                placeholder="Email"
-                                type="email"
-                                value={editingClient.email}
-                                onChange={(e) =>
-                                    setEditingClient((prev) =>
-                                        prev ? { ...prev, email: e.target.value } : prev
-                                    )
-                                }
-                            />
-                            <Input
-                                placeholder="Telefone"
-                                value={editingClient.phone}
-                                onChange={(e) =>
-                                    setEditingClient((prev) =>
-                                        prev ? { ...prev, phone: formatBrazilPhone(e.target.value) } : prev
-                                    )
-                                }
-                            />
-                            <Input
-                                placeholder="Origem do lead"
-                                value={editingClient.leadSource}
-                                onChange={(e) =>
-                                    setEditingClient((prev) =>
-                                        prev ? { ...prev, leadSource: e.target.value } : prev
-                                    )
-                                }
-                            />
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Empresa<Input value={editingClient.company} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, company: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Email<Input type="email" value={editingClient.email} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, email: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Telefone<Input value={editingClient.phone} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, phone: formatBrazilPhone(e.target.value) } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Origem do lead<Input value={editingClient.leadSource} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, leadSource: e.target.value } : prev)} /></label>
                         </div>
 
                         <div className="grid gap-3 md:grid-cols-2">
-                            <Input placeholder="Categoria" value={editingClient.category} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, category: e.target.value } : prev)} />
-                            <Input placeholder="Site" type="url" value={editingClient.website} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, website: e.target.value } : prev)} />
-                            <Input placeholder="Endereço completo" value={editingClient.address} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, address: e.target.value } : prev)} />
-                            <Input placeholder="Cidade" value={editingClient.city} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, city: e.target.value } : prev)} />
-                            <Input placeholder="Estado" value={editingClient.state} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, state: e.target.value } : prev)} />
-                            <Input placeholder="CNPJ" value={editingClient.cnpj} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, cnpj: e.target.value } : prev)} />
-                            <Input placeholder="Razão social" value={editingClient.legalName} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, legalName: e.target.value } : prev)} />
-                            <Input placeholder="Porte da empresa" value={editingClient.companySize} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, companySize: e.target.value } : prev)} />
-                            <Input placeholder="Rating" type="number" min="0" step="0.1" value={editingClient.rating} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, rating: e.target.value } : prev)} />
-                            <Input placeholder="Número de reviews" type="number" min="0" step="1" value={editingClient.reviewCount} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, reviewCount: e.target.value } : prev)} />
-                            <Input placeholder="Capital social" type="number" min="0" step="0.01" value={editingClient.socialCapital} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, socialCapital: e.target.value } : prev)} />
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Categoria<Input value={editingClient.category} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, category: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Site<Input type="url" value={editingClient.website} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, website: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Endereço completo<Input value={editingClient.address} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, address: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Cidade<Input value={editingClient.city} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, city: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Estado<Input value={editingClient.state} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, state: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">CNPJ<Input value={editingClient.cnpj} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, cnpj: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Razão social<Input value={editingClient.legalName} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, legalName: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Porte da empresa<Input value={editingClient.companySize} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, companySize: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Rating<Input type="number" min="0" step="0.1" value={editingClient.rating} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, rating: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Número de reviews<Input type="number" min="0" step="1" value={editingClient.reviewCount} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, reviewCount: e.target.value } : prev)} /></label>
+                            <label className="space-y-1 text-sm font-semibold text-slate-600">Capital social<Input type="number" min="0" step="0.01" value={editingClient.socialCapital} onChange={(e) => setEditingClient((prev) => prev ? { ...prev, socialCapital: e.target.value } : prev)} /></label>
                         </div>
 
                         <div>
@@ -768,28 +769,34 @@ export function ClientsView() {
 
                         <div className="grid gap-3 md:grid-cols-2">
                             {dynamicCustomFields.map((field) => (
-                                <Input
-                                    key={field.id}
-                                    placeholder={field.label}
-                                    value={editingClient.customFieldValues[field.id] || ""}
-                                    onChange={(e) =>
-                                        setEditingClient((prev) =>
-                                            prev
-                                                ? {
-                                                    ...prev,
-                                                    customFieldValues: {
-                                                        ...prev.customFieldValues,
-                                                        [field.id]: e.target.value,
-                                                    },
-                                                }
-                                                : prev
-                                        )
-                                    }
-                                />
+                                <label key={field.id} className="space-y-1 text-sm font-semibold text-slate-600">
+                                    {field.label}
+                                    <Input
+                                        value={editingClient.customFieldValues[field.id] || ""}
+                                        onChange={(e) =>
+                                            setEditingClient((prev) =>
+                                                prev
+                                                    ? {
+                                                        ...prev,
+                                                        customFieldValues: {
+                                                            ...prev.customFieldValues,
+                                                            [field.id]: e.target.value,
+                                                        },
+                                                    }
+                                                    : prev
+                                            )
+                                        }
+                                    />
+                                </label>
                             ))}
                         </div>
 
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-between gap-2">
+                            <Button type="button" variant="outline" onClick={copyClientData}>
+                                {copiedClientData ? <Check className="mr-2 h-4 w-4" /> : <Clipboard className="mr-2 h-4 w-4" />}
+                                {copiedClientData ? "Dados copiados" : "Copiar dados"}
+                            </Button>
+                            <div className="flex gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -803,6 +810,7 @@ export function ClientsView() {
                             <Button type="submit" disabled={updateClient.isPending}>
                                 {updateClient.isPending ? "Salvando..." : "Salvar Alterações"}
                             </Button>
+                            </div>
                         </div>
                     </form>
                 )}
