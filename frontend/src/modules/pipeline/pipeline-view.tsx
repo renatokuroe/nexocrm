@@ -384,8 +384,8 @@ export function PipelineView() {
             />
 
             <div className="flex items-start gap-4">
-                <div className="min-w-0 flex-1 overflow-hidden">
-                    <div className="w-full overflow-x-auto pb-4">
+                <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+                    <div className="max-h-[calc(100vh-270px)] w-full overflow-auto pb-4">
                         <div className="flex min-w-max gap-4">
                         {(boardQuery.data ?? []).map((stage) => {
                     const stageTotal = stage.deals.reduce((sum, deal) => sum + deal.value, 0);
@@ -399,16 +399,16 @@ export function PipelineView() {
                                 onMoveDeal(draggingDealIdRef.current, stage.id);
                                 draggingDealIdRef.current = "";
                             }}
-                            className="min-h-[560px] w-[280px] shrink-0 rounded-2xl border border-slate-200 bg-white/70 p-3"
+                            className="flex min-h-[560px] w-[280px] shrink-0 flex-col rounded-2xl border border-slate-200 bg-white/70 p-3"
                         >
-                            <div className="sticky top-4 z-10 -mx-3 -mt-3 mb-3 flex items-center justify-between rounded-t-2xl bg-white/95 px-3 pb-3 pt-3 backdrop-blur">
+                            <div className="sticky top-0 z-10 -mx-3 -mt-3 mb-3 flex items-center justify-between rounded-t-2xl bg-white/95 px-3 pb-3 pt-3 backdrop-blur">
                                 <p className="font-extrabold text-slate-800">{stage.name}</p>
                                 <span className="text-sm font-bold" style={{ color: stage.color }}>
                                     R$ {stageTotal.toLocaleString("pt-BR")}
                                 </span>
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="min-h-0 flex-1 space-y-3">
                                 {stage.deals.map((deal) => (
                                     <Card
                                         key={deal.id}
