@@ -342,17 +342,13 @@ export function PipelineView() {
             <PageHeader
                 title="Pipeline de Vendas"
                 subtitle="Acompanhe o progresso das suas negociações em tempo real."
-                actions={
-                    <Button onClick={openNewDealModal}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nova Negociação
-                    </Button>
-                }
             />
 
-            <div className="w-full min-w-0 overflow-x-auto pb-4">
-                <div className="flex min-w-max gap-4">
-                {(boardQuery.data ?? []).map((stage) => {
+            <div className="flex items-start gap-4">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="w-full overflow-x-auto pb-4">
+                        <div className="flex min-w-max gap-4">
+                        {(boardQuery.data ?? []).map((stage) => {
                     const stageTotal = stage.deals.reduce((sum, deal) => sum + deal.value, 0);
                     return (
                         <div
@@ -435,8 +431,16 @@ export function PipelineView() {
                             </div>
                         </div>
                     );
-                })}
+                        })}
+                        </div>
+                    </div>
                 </div>
+                <aside className="sticky top-4 shrink-0">
+                    <Button onClick={openNewDealModal} className="whitespace-nowrap">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nova Negociação
+                    </Button>
+                </aside>
             </div>
 
             <Modal
