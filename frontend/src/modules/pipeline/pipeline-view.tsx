@@ -401,7 +401,7 @@ export function PipelineView() {
                             }}
                             className="min-h-[560px] w-[280px] shrink-0 rounded-2xl border border-slate-200 bg-white/70 p-3"
                         >
-                            <div className="mb-3 flex items-center justify-between">
+                            <div className="sticky top-4 z-10 -mx-3 -mt-3 mb-3 flex items-center justify-between rounded-t-2xl bg-white/95 px-3 pb-3 pt-3 backdrop-blur">
                                 <p className="font-extrabold text-slate-800">{stage.name}</p>
                                 <span className="text-sm font-bold" style={{ color: stage.color }}>
                                     R$ {stageTotal.toLocaleString("pt-BR")}
