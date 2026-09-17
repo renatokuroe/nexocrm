@@ -181,6 +181,17 @@ export function PipelineView() {
         },
     });
 
+    const deleteDeal = useMutation({
+        mutationFn: async (dealId: string) => {
+            await api.delete(`/pipeline/deals/${dealId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["pipeline-board"] });
+            setOpenDetailModal(false);
+            setSelectedDeal(null);
+        },
+    });
+
     const createLabel = useMutation({
         mutationFn: async () => {
             const response = await api.post("/pipeline/labels", {
@@ -339,7 +350,8 @@ export function PipelineView() {
                 }
             />
 
-            <div className="grid gap-4 overflow-x-auto pb-4" style={{ gridTemplateColumns: "repeat(6, minmax(280px, 1fr))" }}>
+            <div className="w-full min-w-0 overflow-x-auto pb-4">
+                <div className="flex min-w-max gap-4">
                 {(boardQuery.data ?? []).map((stage) => {
                     const stageTotal = stage.deals.reduce((sum, deal) => sum + deal.value, 0);
                     return (
@@ -352,7 +364,7 @@ export function PipelineView() {
                                 onMoveDeal(draggingDealIdRef.current, stage.id);
                                 draggingDealIdRef.current = "";
                             }}
-                            className="min-h-[560px] rounded-2xl border border-slate-200 bg-white/70 p-3"
+                            className="min-h-[560px] w-[280px] shrink-0 rounded-2xl border border-slate-200 bg-white/70 p-3"
                         >
                             <div className="mb-3 flex items-center justify-between">
                                 <p className="font-extrabold text-slate-800">{stage.name}</p>
@@ -424,6 +436,7 @@ export function PipelineView() {
                         </div>
                     );
                 })}
+                </div>
             </div>
 
             <Modal
@@ -692,13 +705,28 @@ export function PipelineView() {
                             />
                         </div>
 
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                onClick={() => {
+                                    if (!selectedDeal || !window.confirm("Excluir esta negociação?")) return;
+                                    deleteDeal.mutate(selectedDeal.id);
+                                }}
+                                disabled={deleteDeal.isPending}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {deleteDeal.isPending ? "Excluindo..." : "Excluir negociação"}
+                            </Button>
+                            <div className="flex gap-2">
                             <Button type="button" variant="outline" onClick={() => setOpenDetailModal(false)}>
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={saveDealDetails.isPending}>
                                 {saveDealDetails.isPending ? "Salvando..." : "Salvar alterações"}
                             </Button>
+                            </div>
                         </div>
                     </form>
                 ) : null}
