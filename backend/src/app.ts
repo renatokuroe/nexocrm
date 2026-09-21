@@ -13,6 +13,7 @@ import segmentsRoutes from "./modules/segments/segments.routes";
 import customFieldsRoutes from "./modules/custom-fields/custom-fields.routes";
 import pipelineRoutes from "./modules/pipeline/pipeline.routes";
 import tasksRoutes from "./modules/tasks/tasks.routes";
+import cadencesRoutes from "./modules/cadences/cadences.routes";
 import reportsRoutes from "./modules/reports/reports.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 
@@ -48,6 +49,7 @@ app.use(`${API_PREFIX}/segments`, segmentsRoutes);
 app.use(`${API_PREFIX}/custom-fields`, customFieldsRoutes);
 app.use(`${API_PREFIX}/pipeline`, pipelineRoutes);
 app.use(`${API_PREFIX}/tasks`, tasksRoutes);
+app.use(`${API_PREFIX}/cadences`, cadencesRoutes);
 app.use(`${API_PREFIX}/reports`, reportsRoutes);
 app.use(`${API_PREFIX}/admin`, adminRoutes);
 

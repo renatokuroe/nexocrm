@@ -78,6 +78,7 @@ export interface Task {
     description?: string;
     dueDate?: string;
     priority: "LOW" | "MEDIUM" | "HIGH";
+    channel: "TASK" | "CALL" | "EMAIL" | "WHATSAPP" | "LINKEDIN";
     completed: boolean;
     clientId?: string;
     client?: { id: string; name: string; company?: string };

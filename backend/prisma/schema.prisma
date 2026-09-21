@@ -44,6 +44,8 @@ model User {
   clients Client[]
   tasks   Task[]
   deals   Deal[]
+  cadences Cadence[]
+  cadenceEnrollments CadenceEnrollment[]
 
   @@map("users")
 }
@@ -89,6 +91,7 @@ model Client {
   segments          ClientSegment[]
   deals             Deal[]
   tasks             Task[]
+  cadenceEnrollments CadenceEnrollment[]
 
   @@index([userId])
   @@index([status])
@@ -268,6 +271,7 @@ model Task {
   dueDate     DateTime?
   priority    TaskPriority @default(MEDIUM)
   completed   Boolean      @default(false)
+  channel     TaskChannel  @default(TASK)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -276,6 +280,10 @@ model Task {
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
   userId   String
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cadenceStepId String?
+  cadenceStep CadenceStep? @relation(fields: [cadenceStepId], references: [id], onDelete: SetNull)
+  cadenceEnrollmentId String?
+  cadenceEnrollment CadenceEnrollment? @relation(fields: [cadenceEnrollmentId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([completed])
@@ -286,4 +294,73 @@ enum TaskPriority {
   LOW
   MEDIUM
   HIGH
+}
+
+enum TaskChannel {
+  TASK
+  CALL
+  EMAIL
+  WHATSAPP
+  LINKEDIN
+}
+
+model Cadence {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps CadenceStep[]
+  enrollments CadenceEnrollment[]
+
+  @@index([userId])
+  @@map("cadences")
+}
+
+model CadenceStep {
+  id          String      @id @default(cuid())
+  title       String
+  description String?     @db.Text
+  channel     TaskChannel @default(TASK)
+  order       Int
+  delayDays   Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  cadenceId String
+  cadence Cadence @relation(fields: [cadenceId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@unique([cadenceId, order])
+  @@index([cadenceId])
+  @@map("cadence_steps")
+}
+
+enum CadenceEnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  STOPPED
+}
+
+model CadenceEnrollment {
+  id          String                  @id @default(cuid())
+  status      CadenceEnrollmentStatus @default(ACTIVE)
+  enrolledAt  DateTime                @default(now())
+  completedAt DateTime?
+
+  cadenceId String
+  cadence Cadence @relation(fields: [cadenceId], references: [id], onDelete: Cascade)
+  clientId String
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@unique([cadenceId, clientId])
+  @@index([userId, status])
+  @@map("cadence_enrollments")
 }

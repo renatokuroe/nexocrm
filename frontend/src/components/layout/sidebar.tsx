@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
     BarChart3,
     CheckSquare,
+    ListOrdered,
     LayoutDashboard,
     LogOut,
     Settings,
@@ -20,6 +21,7 @@ const menu = [
     { href: "/clients", label: "Clientes", icon: Users },
     { href: "/pipeline", label: "Pipeline", icon: Target },
     { href: "/tasks", label: "Tarefas", icon: CheckSquare },
+    { href: "/cadences", label: "Cadências", icon: ListOrdered },
     { href: "/reports", label: "Relatórios", icon: BarChart3 },
 ];
 
