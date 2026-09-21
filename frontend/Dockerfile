@@ -4,11 +4,12 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund && npm cache clean --force
 
 COPY . .
-RUN mkdir -p public
-RUN npm run build
+RUN mkdir -p public \
+    && npm ci --no-audit --no-fund \
+    && npm run build \
+    && rm -rf node_modules /root/.npm
 
 # Production stage
 FROM node:18-alpine
