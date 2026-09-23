@@ -7,6 +7,7 @@ export interface CreateCadenceDto {
     name: string;
     description?: string;
     steps: Array<{
+        id?: string;
         title: string;
         description?: string;
         channel?: CadenceChannel;
@@ -22,20 +23,32 @@ export class CadencesService {
     }
 
     async create(userId: string, dto: CreateCadenceDto) {
+        return this.repository.create(userId, this.toCadenceData(dto));
+    }
+
+    // Changes apply to future enrollments; tasks already generated are kept as they are.
+    async update(id: string, tenantId: string, dto: CreateCadenceDto) {
+        const cadence = await this.repository.update(id, tenantId, this.toCadenceData(dto));
+        if (!cadence) throw new NotFoundError("Cadence not found");
+        return cadence;
+    }
+
+    private toCadenceData(dto: CreateCadenceDto) {
         if (!dto.name?.trim()) throw new BadRequestError("Cadence name is required");
         if (!dto.steps?.length) throw new BadRequestError("A cadence needs at least one step");
 
-        return this.repository.create(userId, {
+        return {
             name: dto.name.trim(),
             description: dto.description,
             steps: dto.steps.map((step, index) => ({
+                id: step.id,
                 title: step.title,
                 description: step.description,
                 channel: step.channel || "TASK",
                 order: index + 1,
                 delayDays: Math.max(0, step.delayDays || 0),
             })),
-        });
+        };
     }
 
     async enrollments(cadenceId: string, tenantId: string) {

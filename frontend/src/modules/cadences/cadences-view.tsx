@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Plus, Play, Trash2, Users } from "lucide-react";
+import { Pencil, Plus, Play, Trash2, Users } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,7 +13,7 @@ import { ClientPicker, PickedClient } from "@/components/ui/client-picker";
 import { useAuth } from "@/hooks/use-auth";
 
 type Channel = "TASK" | "CALL" | "EMAIL" | "WHATSAPP" | "LINKEDIN";
-type Step = { title: string; channel: Channel; delayDays: number };
+type Step = { id?: string; title: string; channel: Channel; delayDays: number };
 type Cadence = { id: string; name: string; description?: string; steps: Step[]; _count: { enrollments: number } };
 type EnrollmentStatus = "ACTIVE" | "COMPLETED" | "PAUSED" | "STOPPED";
 type Enrollment = {
@@ -60,6 +60,7 @@ export function CadencesView() {
     const [steps, setSteps] = useState<Step[]>([
         { title: "Primeiro contato", channel: "CALL", delayDays: 0 },
     ]);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [clientByCadence, setClientByCadence] = useState<Record<string, PickedClient | null>>({});
     const [enrollFeedback, setEnrollFeedback] = useState<Record<string, { ok: boolean; text: string }>>({});
     const [enrollmentsCadence, setEnrollmentsCadence] = useState<Cadence | null>(null);
@@ -73,13 +74,27 @@ export function CadencesView() {
         queryFn: async () => (await api.get(`/cadences/${enrollmentsCadence!.id}/enrollments`)).data.data as Enrollment[],
         enabled: Boolean(enrollmentsCadence),
     });
-    const createCadence = useMutation({
-        mutationFn: async () => api.post("/cadences", { name, description: description || undefined, steps }),
+    const resetForm = () => {
+        setEditingId(null);
+        setName("");
+        setDescription("");
+        setSteps([{ title: "Primeiro contato", channel: "CALL", delayDays: 0 }]);
+    };
+    const startEdit = (cadence: Cadence) => {
+        setEditingId(cadence.id);
+        setName(cadence.name);
+        setDescription(cadence.description || "");
+        setSteps(cadence.steps.map(({ id, title, channel, delayDays }) => ({ id, title, channel, delayDays })));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    const saveCadence = useMutation({
+        mutationFn: async () => {
+            const payload = { name, description: description || undefined, steps };
+            return editingId ? api.put(`/cadences/${editingId}`, payload) : api.post("/cadences", payload);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["cadences"] });
-            setName("");
-            setDescription("");
-            setSteps([{ title: "Primeiro contato", channel: "CALL", delayDays: 0 }]);
+            resetForm();
         },
     });
     const enroll = useMutation({
@@ -101,7 +116,7 @@ export function CadencesView() {
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        createCadence.mutate();
+        saveCadence.mutate();
     };
 
     return (
@@ -110,7 +125,12 @@ export function CadencesView() {
 
             {isAdmin ? (
                 <Card>
-                    <CardHeader><CardTitle>Nova cadência</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle>{editingId ? "Editar cadência" : "Nova cadência"}</CardTitle>
+                        {editingId ? (
+                            <p className="text-sm text-slate-500">As alterações valem para as próximas inscrições. Tarefas já geradas não mudam.</p>
+                        ) : null}
+                    </CardHeader>
                     <CardContent>
                         <form className="space-y-4" onSubmit={submit}>
                             <div className="grid gap-3 md:grid-cols-2">
@@ -119,7 +139,7 @@ export function CadencesView() {
                             </div>
                             <div className="space-y-2">
                                 {steps.map((step, index) => (
-                                    <div className="grid gap-2 md:grid-cols-[1fr_9rem_6rem_auto]" key={index}>
+                                    <div className="grid gap-2 md:grid-cols-[1fr_9rem_6rem_auto]" key={step.id ?? `new-${index}`}>
                                         <Input placeholder="Título da atividade" value={step.title} required onChange={(event) => setSteps((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item))} />
                                         <select className="h-11 rounded-xl border border-slate-200 bg-white px-3" value={step.channel} onChange={(event) => setSteps((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, channel: event.target.value as Channel } : item))}>
                                             {Object.entries(channelLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -131,7 +151,8 @@ export function CadencesView() {
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 <Button type="button" variant="outline" onClick={() => setSteps((current) => [...current, { title: "Nova atividade", channel: "TASK", delayDays: 1 }])}><Plus className="mr-2 h-4 w-4" />Adicionar etapa</Button>
-                                <Button type="submit" disabled={createCadence.isPending}>{createCadence.isPending ? "Salvando..." : "Salvar cadência"}</Button>
+                                <Button type="submit" disabled={saveCadence.isPending}>{saveCadence.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Salvar cadência"}</Button>
+                                {editingId ? <Button type="button" variant="ghost" onClick={resetForm}>Cancelar edição</Button> : null}
                             </div>
                         </form>
                     </CardContent>
@@ -141,7 +162,18 @@ export function CadencesView() {
             <div className="grid gap-4 lg:grid-cols-2">
                 {(cadencesQuery.data ?? []).map((cadence) => (
                     <Card key={cadence.id}>
-                        <CardHeader><CardTitle>{cadence.name}</CardTitle><p className="text-sm text-slate-500">{cadence.description || "Sem descrição"}</p></CardHeader>
+                        <CardHeader>
+                            <div className="flex items-start justify-between gap-3">
+                                <CardTitle>{cadence.name}</CardTitle>
+                                {isAdmin ? (
+                                    <Button type="button" variant="outline" size="sm" onClick={() => startEdit(cadence)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </Button>
+                                ) : null}
+                            </div>
+                            <p className="text-sm text-slate-500">{cadence.description || "Sem descrição"}</p>
+                        </CardHeader>
                         <CardContent className="space-y-4">
                             <ol className="space-y-2 text-sm text-slate-600">
                                 {cadence.steps.map((step, index) => (

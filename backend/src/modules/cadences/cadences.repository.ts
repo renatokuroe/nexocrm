@@ -5,6 +5,19 @@ const CADENCE_INCLUDE = {
     _count: { select: { enrollments: true } },
 };
 
+type CadenceData = {
+    name: string;
+    description?: string;
+    steps: Array<{
+        id?: string;
+        title: string;
+        description?: string;
+        channel: "TASK" | "CALL" | "EMAIL" | "WHATSAPP" | "LINKEDIN";
+        order: number;
+        delayDays: number;
+    }>;
+};
+
 export class CadencesRepository {
     // Cadences are shared by everyone in the tenant; only admins create them.
     async findAll(tenantId: string) {
@@ -40,25 +53,47 @@ export class CadencesRepository {
         });
     }
 
-    async create(userId: string, data: {
-        name: string;
-        description?: string;
-        steps: Array<{
-            title: string;
-            description?: string;
-            channel: "TASK" | "CALL" | "EMAIL" | "WHATSAPP" | "LINKEDIN";
-            order: number;
-            delayDays: number;
-        }>;
-    }) {
+    async create(userId: string, data: CadenceData) {
         return prisma.cadence.create({
             data: {
                 userId,
                 name: data.name,
                 description: data.description,
-                steps: { create: data.steps },
+                steps: { create: data.steps.map(({ id: _id, ...step }) => step) },
             },
             include: CADENCE_INCLUDE,
+        });
+    }
+
+    async update(id: string, tenantId: string, data: CadenceData) {
+        const cadence = await prisma.cadence.findFirst({
+            where: { id, user: { tenantId } },
+            include: { steps: { select: { id: true } } },
+        });
+        if (!cadence) return null;
+
+        const existingIds = new Set(cadence.steps.map((step) => step.id));
+        const keptIds = data.steps.map((step) => step.id).filter((stepId): stepId is string => Boolean(stepId && existingIds.has(stepId)));
+
+        return prisma.$transaction(async (tx) => {
+            // Removed steps are deleted; tasks already generated from them keep existing (cadenceStepId is set null).
+            await tx.cadenceStep.deleteMany({ where: { cadenceId: id, id: { notIn: keptIds } } });
+            // Move kept steps out of the way so reordering does not hit the (cadenceId, order) unique index.
+            await tx.cadenceStep.updateMany({ where: { cadenceId: id }, data: { order: { increment: 10000 } } });
+
+            for (const { id: stepId, ...step } of data.steps) {
+                if (stepId && existingIds.has(stepId)) {
+                    await tx.cadenceStep.update({ where: { id: stepId }, data: step });
+                } else {
+                    await tx.cadenceStep.create({ data: { ...step, cadenceId: id } });
+                }
+            }
+
+            return tx.cadence.update({
+                where: { id },
+                data: { name: data.name, description: data.description ?? null },
+                include: CADENCE_INCLUDE,
+            });
         });
     }
 

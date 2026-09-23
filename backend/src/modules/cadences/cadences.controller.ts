@@ -14,6 +14,10 @@ export class CadencesController {
         try { sendSuccess(res, await this.service.create(req.user!.id, req.body), "Cadence created", 201); } catch (error) { next(error); }
     };
 
+    update = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try { sendSuccess(res, await this.service.update(req.params.id, req.user!.tenantId, req.body), "Cadence updated"); } catch (error) { next(error); }
+    };
+
     enrollments = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try { sendSuccess(res, await this.service.enrollments(req.params.id, req.user!.tenantId)); } catch (error) { next(error); }
     };

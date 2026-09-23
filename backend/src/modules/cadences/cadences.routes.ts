@@ -8,6 +8,7 @@ const controller = new CadencesController();
 router.use(authenticate);
 router.get("/", controller.list);
 router.post("/", requireAdmin, controller.create);
+router.put("/:id", requireAdmin, controller.update);
 router.get("/:id/enrollments", controller.enrollments);
 router.post("/:id/enroll", controller.enroll);
 
