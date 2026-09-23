@@ -17,8 +17,8 @@ export interface CreateCadenceDto {
 export class CadencesService {
     private repository = new CadencesRepository();
 
-    list(userId: string) {
-        return this.repository.findAll(userId);
+    list(tenantId: string) {
+        return this.repository.findAll(tenantId);
     }
 
     async create(userId: string, dto: CreateCadenceDto) {
@@ -38,10 +38,10 @@ export class CadencesService {
         });
     }
 
-    async enroll(cadenceId: string, userId: string, clientId: string) {
+    async enroll(cadenceId: string, userId: string, tenantId: string, clientId: string) {
         if (!clientId) throw new BadRequestError("Client is required");
         try {
-            const enrollment = await this.repository.enroll(cadenceId, clientId, userId);
+            const enrollment = await this.repository.enroll(cadenceId, clientId, userId, tenantId);
             if (enrollment === null) throw new NotFoundError("Cadence not found");
             if (enrollment === undefined) throw new NotFoundError("Client not found");
             return enrollment;

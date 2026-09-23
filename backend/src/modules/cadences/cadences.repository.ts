@@ -6,17 +6,18 @@ const CADENCE_INCLUDE = {
 };
 
 export class CadencesRepository {
-    async findAll(userId: string) {
+    // Cadences are shared by everyone in the tenant; only admins create them.
+    async findAll(tenantId: string) {
         return prisma.cadence.findMany({
-            where: { userId },
+            where: { user: { tenantId }, active: true },
             include: CADENCE_INCLUDE,
             orderBy: { createdAt: "desc" },
         });
     }
 
-    async findById(id: string, userId: string) {
+    async findById(id: string, tenantId: string) {
         return prisma.cadence.findFirst({
-            where: { id, userId },
+            where: { id, user: { tenantId } },
             include: { ...CADENCE_INCLUDE, enrollments: { include: { client: true } } },
         });
     }
@@ -43,14 +44,14 @@ export class CadencesRepository {
         });
     }
 
-    async enroll(cadenceId: string, clientId: string, userId: string) {
+    async enroll(cadenceId: string, clientId: string, userId: string, tenantId: string) {
         const cadence = await prisma.cadence.findFirst({
-            where: { id: cadenceId, userId, active: true },
+            where: { id: cadenceId, user: { tenantId }, active: true },
             include: { steps: { orderBy: { order: "asc" } } },
         });
         if (!cadence) return null;
 
-        const client = await prisma.client.findFirst({ where: { id: clientId, user: { id: userId } } });
+        const client = await prisma.client.findFirst({ where: { id: clientId, user: { tenantId } } });
         if (!client) return undefined;
 
         return prisma.$transaction(async (transaction) => {
