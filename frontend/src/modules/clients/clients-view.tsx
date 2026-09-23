@@ -182,6 +182,9 @@ export function ClientsView() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["clients"] });
+            // Creating a client also creates a deal, so refresh the pipeline caches too.
+            queryClient.invalidateQueries({ queryKey: ["client-picker"] });
+            queryClient.invalidateQueries({ queryKey: ["pipeline-board"] });
             setOpenClientModal(false);
             setForm({
                 name: "",

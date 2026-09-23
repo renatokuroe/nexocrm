@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ClientPicker, PickedClient } from "@/components/ui/client-picker";
 
 type Channel = "TASK" | "CALL" | "EMAIL" | "WHATSAPP" | "LINKEDIN";
 type Step = { title: string; channel: Channel; delayDays: number };
@@ -28,15 +29,11 @@ export function CadencesView() {
     const [steps, setSteps] = useState<Step[]>([
         { title: "Primeiro contato", channel: "CALL", delayDays: 0 },
     ]);
-    const [clientByCadence, setClientByCadence] = useState<Record<string, string>>({});
+    const [clientByCadence, setClientByCadence] = useState<Record<string, PickedClient | null>>({});
 
     const cadencesQuery = useQuery({
         queryKey: ["cadences"],
         queryFn: async () => (await api.get("/cadences")).data.data as Cadence[],
-    });
-    const clientsQuery = useQuery({
-        queryKey: ["cadence-clients"],
-        queryFn: async () => (await api.get("/clients", { params: { limit: 100 } })).data.data as { id: string; name: string }[],
     });
     const createCadence = useMutation({
         mutationFn: async () => api.post("/cadences", { name, description: description || undefined, steps }),
@@ -49,7 +46,10 @@ export function CadencesView() {
     });
     const enroll = useMutation({
         mutationFn: async ({ cadenceId, clientId }: { cadenceId: string; clientId: string }) => api.post(`/cadences/${cadenceId}/enroll`, { clientId }),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cadences"] }),
+        onSuccess: (_, { cadenceId }) => {
+            queryClient.invalidateQueries({ queryKey: ["cadences"] });
+            setClientByCadence((current) => ({ ...current, [cadenceId]: null }));
+        },
     });
 
     const submit = (event: FormEvent) => {
@@ -98,11 +98,14 @@ export function CadencesView() {
                                 {cadence.steps.map((step, index) => <li key={index} className="flex justify-between border-b border-slate-100 pb-2"><span>{index + 1}. {step.title}</span><span className="font-semibold text-primary">{channelLabels[step.channel]}</span></li>)}
                             </ol>
                             <div className="flex gap-2">
-                                <select className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3" value={clientByCadence[cadence.id] || ""} onChange={(event) => setClientByCadence((current) => ({ ...current, [cadence.id]: event.target.value }))}>
-                                    <option value="">Inscrever cliente...</option>
-                                    {(clientsQuery.data ?? []).map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
-                                </select>
-                                <Button disabled={!clientByCadence[cadence.id] || enroll.isPending} onClick={() => enroll.mutate({ cadenceId: cadence.id, clientId: clientByCadence[cadence.id] })}><Play className="mr-2 h-4 w-4" />Inscrever</Button>
+                                <ClientPicker
+                                    className="flex-1"
+                                    value={clientByCadence[cadence.id] ?? null}
+                                    onChange={(client) => setClientByCadence((current) => ({ ...current, [cadence.id]: client }))}
+                                    placeholder="Inscrever cliente..."
+                                    allowClear={false}
+                                />
+                                <Button disabled={!clientByCadence[cadence.id] || enroll.isPending} onClick={() => enroll.mutate({ cadenceId: cadence.id, clientId: clientByCadence[cadence.id]!.id })}><Play className="mr-2 h-4 w-4" />Inscrever</Button>
                             </div>
                             <p className="text-xs text-slate-500">{cadence._count.enrollments} cliente(s) inscrito(s)</p>
                         </CardContent>

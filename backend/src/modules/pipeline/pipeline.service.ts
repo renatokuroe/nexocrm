@@ -100,8 +100,12 @@ export class PipelineService {
         const existing = await this.repository.findDealById(id, tenantId);
         if (!existing) throw new NotFoundError("Deal not found");
 
+        // Only accept editable fields; stage changes go through moveDeal.
         return this.repository.updateDeal(id, tenantId, {
-            ...dto,
+            title: dto.title,
+            value: dto.value,
+            description: dto.description,
+            clientId: dto.clientId,
             closeDate: dto.closeDate ? new Date(dto.closeDate) : undefined,
         });
     }

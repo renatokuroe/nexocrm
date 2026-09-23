@@ -130,7 +130,7 @@ export class PipelineRepository {
             closeDate: Date;
             description: string;
             stageId: string;
-            clientId: string;
+            clientId: string | null;
         }>
     ) {
         const deal = await prisma.deal.findFirst({ where: { id, user: { tenantId } } });

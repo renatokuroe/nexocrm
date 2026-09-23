@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { ClientPicker, PickedClient } from "@/components/ui/client-picker";
 import { Client } from "@/types/domain";
 
 interface DealLabelLink {
@@ -84,14 +85,14 @@ export function PipelineView() {
     const [createForm, setCreateForm] = useState({
         title: "",
         value: "",
-        clientId: "",
+        client: null as PickedClient | null,
         stageId: "",
         closeDate: "",
         description: "",
     });
     const [detailForm, setDetailForm] = useState({
         title: "",
-        clientId: "",
+        client: null as PickedClient | null,
         value: "",
         closeDate: "",
         description: "",
@@ -106,18 +107,17 @@ export function PipelineView() {
         },
     });
 
-    const clientsQuery = useQuery({
-        queryKey: ["pipeline-clients"],
+    // Full client data for the "Ver dados do cliente" modal and copy action.
+    const selectedClientQuery = useQuery({
+        queryKey: ["pipeline-client", detailForm.client?.id],
         queryFn: async () => {
-            const response = await api.get("/clients", { params: { limit: 100 } });
-            return response.data.data as Client[];
+            const response = await api.get(`/clients/${detailForm.client!.id}`);
+            return response.data.data as Client;
         },
+        enabled: Boolean(detailForm.client?.id),
     });
 
-    const selectedClient = useMemo(
-        () => (clientsQuery.data ?? []).find((client) => client.id === detailForm.clientId),
-        [clientsQuery.data, detailForm.clientId]
-    );
+    const selectedClient = selectedClientQuery.data?.id === detailForm.client?.id ? selectedClientQuery.data : undefined;
 
     const copySelectedClientData = async () => {
         if (!selectedClient) return;
@@ -174,7 +174,7 @@ export function PipelineView() {
             await api.post("/pipeline/deals", {
                 title: createForm.title,
                 value: parseBRLInput(createForm.value),
-                clientId: createForm.clientId || undefined,
+                clientId: createForm.client?.id,
                 stageId: createForm.stageId,
                 closeDate: createForm.closeDate || undefined,
                 description: createForm.description || undefined,
@@ -186,7 +186,7 @@ export function PipelineView() {
             setCreateForm({
                 title: "",
                 value: "",
-                clientId: "",
+                client: null,
                 stageId: boardQuery.data?.[0]?.id ?? "",
                 closeDate: "",
                 description: "",
@@ -200,7 +200,7 @@ export function PipelineView() {
 
             await api.put(`/pipeline/deals/${selectedDeal.id}`, {
                 title: detailForm.title,
-                clientId: detailForm.clientId || undefined,
+                clientId: detailForm.client?.id ?? null,
                 value: parseBRLInput(detailForm.value),
                 closeDate: detailForm.closeDate || undefined,
                 description: detailForm.description,
@@ -325,7 +325,7 @@ export function PipelineView() {
         setSelectedDeal(deal);
         setDetailForm({
             title: deal.title,
-            clientId: deal.clientId || "",
+            client: deal.client ? { id: deal.client.id, name: deal.client.name, company: deal.client.company } : null,
             value: formatBRL(deal.value ?? 0),
             closeDate: deal.closeDate ? new Date(deal.closeDate).toISOString().slice(0, 10) : "",
             description: deal.description || "",
@@ -528,18 +528,11 @@ export function PipelineView() {
                             ))}
                         </select>
 
-                        <select
-                            className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
-                            value={createForm.clientId}
-                            onChange={(e) => setCreateForm((prev) => ({ ...prev, clientId: e.target.value }))}
-                        >
-                            <option value="">Sem cliente</option>
-                            {(clientsQuery.data ?? []).map((client) => (
-                                <option key={client.id} value={client.id}>
-                                    {client.name}
-                                </option>
-                            ))}
-                        </select>
+                        <ClientPicker
+                            value={createForm.client}
+                            onChange={(client) => setCreateForm((prev) => ({ ...prev, client }))}
+                            placeholder="Sem cliente"
+                        />
                     </div>
 
                     <textarea
@@ -588,18 +581,12 @@ export function PipelineView() {
                         <div className="grid gap-3 md:grid-cols-3">
                             <div className="rounded-2xl border border-slate-200 p-4">
                                 <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Cliente</p>
-                                <select
-                                    className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700"
-                                    value={detailForm.clientId}
-                                    onChange={(e) => setDetailForm((prev) => ({ ...prev, clientId: e.target.value }))}
-                                >
-                                    <option value="">Sem cliente</option>
-                                    {(clientsQuery.data ?? []).map((client) => (
-                                        <option key={client.id} value={client.id}>
-                                            {client.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <ClientPicker
+                                    className="mt-2 h-10 rounded-lg"
+                                    value={detailForm.client}
+                                    onChange={(client) => setDetailForm((prev) => ({ ...prev, client }))}
+                                    placeholder="Sem cliente"
+                                />
                             </div>
                             <div className="rounded-2xl border border-slate-200 p-4">
                                 <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Valor</p>

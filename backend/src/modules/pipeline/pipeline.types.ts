@@ -8,7 +8,10 @@ export interface CreateDealDto {
     clientId?: string;
 }
 
-export interface UpdateDealDto extends Partial<CreateDealDto> { }
+export interface UpdateDealDto extends Partial<Omit<CreateDealDto, "clientId">> {
+    // null unlinks the client from the deal
+    clientId?: string | null;
+}
 
 export interface MoveDealDto {
     stageId: string;
