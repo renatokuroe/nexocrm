@@ -18,8 +18,12 @@ export class ReportsService {
     /**
      * Returns all KPI metrics needed for dashboard and reports page.
      */
-    async getDashboardStats(_userId: string, tenantId: string) {
+    async getDashboardStats(userId: string, tenantId: string) {
         const now = new Date();
+        const startOfToday = new Date(now);
+        startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date(now);
+        endOfToday.setHours(23, 59, 59, 999);
         const staleClientsCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.staleClientsDays * MS_PER_DAY);
         const stalledDealsCutoff = new Date(now.getTime() - DASHBOARD_INSIGHT_RULES.stalledDealsDays * MS_PER_DAY);
         const urgentCloseCutoff = new Date(now.getTime() + DASHBOARD_INSIGHT_RULES.urgentCloseWindowDays * MS_PER_DAY);
@@ -42,6 +46,7 @@ export class ReportsService {
             urgentClosings,
             lowValueDeals,
             leadFollowUps,
+            dailyActions,
         ] = await Promise.all([
             // Total clients count
             prisma.client.count({ where: { user: { tenantId } } }),
@@ -176,6 +181,21 @@ export class ReportsService {
                     segments: { include: { segment: true } },
                 },
             }),
+
+            // Cadence steps due today (or overdue) for the current user
+            prisma.task.findMany({
+                where: {
+                    userId,
+                    completed: false,
+                    dueDate: { lte: endOfToday },
+                    cadenceEnrollment: { status: "ACTIVE" },
+                },
+                orderBy: { dueDate: "asc" },
+                include: {
+                    client: { select: { id: true, name: true, company: true, phone: true } },
+                    cadenceEnrollment: { select: { cadence: { select: { name: true } } } },
+                },
+            }),
         ]);
 
         // Calculate conversion rate (won / total)
@@ -271,6 +291,15 @@ export class ReportsService {
             funnelData,
             revenueByMonth,
             insights,
+            dailyActions: dailyActions.map((task) => ({
+                id: task.id,
+                title: task.title,
+                channel: task.channel,
+                dueDate: task.dueDate,
+                overdueDays: Math.max(0, Math.ceil((startOfToday.getTime() - task.dueDate!.getTime()) / MS_PER_DAY)),
+                cadenceName: task.cadenceEnrollment?.cadence.name ?? null,
+                client: task.client,
+            })),
         };
     }
 }

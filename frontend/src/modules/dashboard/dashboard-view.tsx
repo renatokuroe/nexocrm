@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import { DashboardInsightsPanel } from "./dashboard-insights-panel";
+import { DashboardDailyActions } from "./dashboard-daily-actions";
 
 // Dashboard view aggregates KPIs and recent activity cards.
 export function DashboardView() {
@@ -65,6 +66,8 @@ export function DashboardView() {
                     );
                 })}
             </div>
+
+            <DashboardDailyActions actions={data?.dailyActions ?? []} />
 
             <DashboardInsightsPanel insights={data?.insights ?? []} />
 
