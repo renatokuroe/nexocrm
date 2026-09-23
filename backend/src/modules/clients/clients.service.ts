@@ -9,6 +9,15 @@ import type {
     ClientFilters,
 } from "./clients.types";
 
+function normalizeDigits(value?: string | null) {
+    return (value ?? "").replace(/\D/g, "");
+}
+
+// CNPJs arrive with and without leading zeros, so compare them without them.
+function normalizeCnpj(value?: string | null) {
+    return normalizeDigits(value).replace(/^0+/, "");
+}
+
 export class ClientsService {
     private repository: ClientsRepository;
 
@@ -37,9 +46,18 @@ export class ClientsService {
     }
 
     /**
-     * Creates a new client.
+     * Creates a new client, or returns the existing one when it is a duplicate
+     * (same Google place_id, or same CNPJ and phone within the tenant).
      */
-    async create(userId: string, dto: CreateClientDto) {
+    async create(userId: string, tenantId: string, dto: CreateClientDto) {
+        const existing = await this.findDuplicate(tenantId, dto);
+        if (existing) {
+            if (dto.placeId && !existing.placeId) {
+                await this.repository.setPlaceId(existing.id, dto.placeId);
+            }
+            return { client: await this.getById(existing.id, tenantId), created: false };
+        }
+
         const { segmentIds, customFields, ...clientData } = dto;
 
         // Convert birthday string to Date if provided
@@ -48,7 +66,24 @@ export class ClientsService {
             birthday: dto.birthday ? new Date(dto.birthday) : undefined,
         };
 
-        return this.repository.create(userId, data, segmentIds, customFields);
+        return { client: await this.repository.create(userId, data, segmentIds, customFields), created: true };
+    }
+
+    private async findDuplicate(tenantId: string, dto: CreateClientDto) {
+        if (dto.placeId) {
+            const byPlace = await this.repository.findByPlaceId(tenantId, dto.placeId);
+            if (byPlace) return byPlace;
+        }
+
+        const cnpj = normalizeCnpj(dto.cnpj);
+        if (!cnpj) return null;
+
+        // Chains share a CNPJ across branches, so the phone must match too.
+        const phone = normalizeDigits(dto.phone);
+        const candidates = await this.repository.findByCnpjSuffix(tenantId, cnpj);
+        return candidates.find((candidate) =>
+            normalizeCnpj(candidate.cnpj) === cnpj && normalizeDigits(candidate.phone) === phone
+        ) ?? null;
     }
 
     /**

@@ -85,6 +85,26 @@ export class ClientsRepository {
         });
     }
 
+    async findByPlaceId(tenantId: string, placeId: string) {
+        return prisma.client.findFirst({
+            where: { placeId, user: { tenantId } },
+            orderBy: { createdAt: "asc" },
+            select: { id: true, placeId: true, cnpj: true, phone: true },
+        });
+    }
+
+    async findByCnpjSuffix(tenantId: string, cnpj: string) {
+        return prisma.client.findMany({
+            where: { cnpj: { endsWith: cnpj }, user: { tenantId } },
+            orderBy: { createdAt: "asc" },
+            select: { id: true, placeId: true, cnpj: true, phone: true },
+        });
+    }
+
+    async setPlaceId(id: string, placeId: string) {
+        return prisma.client.update({ where: { id }, data: { placeId } });
+    }
+
     /**
      * Create a new client with optional segments and custom field values.
      */
@@ -106,6 +126,7 @@ export class ClientsRepository {
             reviewCount?: number;
             companySize?: string;
             socialCapital?: number;
+            placeId?: string;
             status?: "ACTIVE" | "INACTIVE" | "LEAD";
             leadSource?: string;
             birthday?: Date;
@@ -192,6 +213,7 @@ export class ClientsRepository {
             reviewCount?: number;
             companySize?: string;
             socialCapital?: number;
+            placeId?: string;
             status?: "ACTIVE" | "INACTIVE" | "LEAD";
             leadSource?: string;
             birthday?: Date;

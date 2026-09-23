@@ -18,6 +18,7 @@ export interface CreateClientDto {
     reviewCount?: number;
     companySize?: string;
     socialCapital?: number;
+    placeId?: string;
     status?: ClientStatus;
     leadSource?: string;
     birthday?: string;

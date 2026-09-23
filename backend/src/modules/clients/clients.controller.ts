@@ -52,8 +52,12 @@ export class ClientsController {
         next: NextFunction
     ): Promise<void> => {
         try {
-            const client = await this.service.create(req.user!.id, req.body);
-            sendSuccess(res, client, "Client created successfully", 201);
+            const { client, created } = await this.service.create(req.user!.id, req.user!.tenantId, req.body);
+            if (created) {
+                sendSuccess(res, client, "Client created successfully", 201);
+            } else {
+                sendSuccess(res, client, "Client already exists", 200);
+            }
         } catch (error) {
             next(error);
         }

@@ -75,6 +75,7 @@ model Client {
   reviewCount Int?
   companySize String?
   socialCapital Float?
+  placeId    String?      // Google Maps place_id, used to deduplicate imported leads
   status     ClientStatus @default(ACTIVE)
   leadSource String?      // e.g. "Instagram", "Google", "Indicação"
   birthday   DateTime?
@@ -95,6 +96,7 @@ model Client {
 
   @@index([userId])
   @@index([status])
+  @@index([placeId])
   @@map("clients")
 }
 
