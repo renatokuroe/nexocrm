@@ -22,6 +22,24 @@ export class CadencesRepository {
         });
     }
 
+    async findEnrollments(cadenceId: string, tenantId: string) {
+        const cadence = await prisma.cadence.findFirst({ where: { id: cadenceId, user: { tenantId } }, select: { id: true } });
+        if (!cadence) return null;
+
+        return prisma.cadenceEnrollment.findMany({
+            where: { cadenceId },
+            orderBy: { enrolledAt: "desc" },
+            select: {
+                id: true,
+                status: true,
+                enrolledAt: true,
+                client: { select: { id: true, name: true, company: true } },
+                user: { select: { id: true, name: true } },
+                tasks: { select: { title: true, dueDate: true, completed: true }, orderBy: { dueDate: "asc" } },
+            },
+        });
+    }
+
     async create(userId: string, data: {
         name: string;
         description?: string;

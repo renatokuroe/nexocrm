@@ -38,6 +38,21 @@ export class CadencesService {
         });
     }
 
+    async enrollments(cadenceId: string, tenantId: string) {
+        const enrollments = await this.repository.findEnrollments(cadenceId, tenantId);
+        if (!enrollments) throw new NotFoundError("Cadence not found");
+
+        return enrollments.map(({ tasks, ...enrollment }) => {
+            const nextTask = tasks.find((task) => !task.completed);
+            return {
+                ...enrollment,
+                completedSteps: tasks.filter((task) => task.completed).length,
+                totalSteps: tasks.length,
+                nextStep: nextTask ? { title: nextTask.title, dueDate: nextTask.dueDate } : null,
+            };
+        });
+    }
+
     async enroll(cadenceId: string, userId: string, tenantId: string, clientId: string) {
         if (!clientId) throw new BadRequestError("Client is required");
         try {

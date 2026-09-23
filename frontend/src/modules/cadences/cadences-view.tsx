@@ -1,19 +1,38 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Plus, Play, Trash2 } from "lucide-react";
+import { Plus, Play, Trash2, Users } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { ClientPicker, PickedClient } from "@/components/ui/client-picker";
 import { useAuth } from "@/hooks/use-auth";
 
 type Channel = "TASK" | "CALL" | "EMAIL" | "WHATSAPP" | "LINKEDIN";
 type Step = { title: string; channel: Channel; delayDays: number };
 type Cadence = { id: string; name: string; description?: string; steps: Step[]; _count: { enrollments: number } };
+type EnrollmentStatus = "ACTIVE" | "COMPLETED" | "PAUSED" | "STOPPED";
+type Enrollment = {
+    id: string;
+    status: EnrollmentStatus;
+    enrolledAt: string;
+    client: { id: string; name: string; company?: string | null };
+    user: { id: string; name: string };
+    completedSteps: number;
+    totalSteps: number;
+    nextStep: { title: string; dueDate: string | null } | null;
+};
+
+const statusLabels: Record<EnrollmentStatus, string> = {
+    ACTIVE: "Ativa",
+    COMPLETED: "Concluída",
+    PAUSED: "Pausada",
+    STOPPED: "Encerrada",
+};
 
 const channelLabels: Record<Channel, string> = {
     TASK: "Tarefa",
@@ -42,10 +61,17 @@ export function CadencesView() {
         { title: "Primeiro contato", channel: "CALL", delayDays: 0 },
     ]);
     const [clientByCadence, setClientByCadence] = useState<Record<string, PickedClient | null>>({});
+    const [enrollFeedback, setEnrollFeedback] = useState<Record<string, { ok: boolean; text: string }>>({});
+    const [enrollmentsCadence, setEnrollmentsCadence] = useState<Cadence | null>(null);
 
     const cadencesQuery = useQuery({
         queryKey: ["cadences"],
         queryFn: async () => (await api.get("/cadences")).data.data as Cadence[],
+    });
+    const enrollmentsQuery = useQuery({
+        queryKey: ["cadence-enrollments", enrollmentsCadence?.id],
+        queryFn: async () => (await api.get(`/cadences/${enrollmentsCadence!.id}/enrollments`)).data.data as Enrollment[],
+        enabled: Boolean(enrollmentsCadence),
     });
     const createCadence = useMutation({
         mutationFn: async () => api.post("/cadences", { name, description: description || undefined, steps }),
@@ -57,10 +83,19 @@ export function CadencesView() {
         },
     });
     const enroll = useMutation({
-        mutationFn: async ({ cadenceId, clientId }: { cadenceId: string; clientId: string }) => api.post(`/cadences/${cadenceId}/enroll`, { clientId }),
-        onSuccess: (_, { cadenceId }) => {
+        mutationFn: async ({ cadenceId, client }: { cadenceId: string; client: PickedClient }) => api.post(`/cadences/${cadenceId}/enroll`, { clientId: client.id }),
+        onSuccess: (_, { cadenceId, client }) => {
             queryClient.invalidateQueries({ queryKey: ["cadences"] });
+            queryClient.invalidateQueries({ queryKey: ["cadence-enrollments", cadenceId] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
             setClientByCadence((current) => ({ ...current, [cadenceId]: null }));
+            setEnrollFeedback((current) => ({ ...current, [cadenceId]: { ok: true, text: `${client.name} inscrito(a) com sucesso.` } }));
+        },
+        onError: (error: { response?: { status?: number } }, { cadenceId, client }) => {
+            const text = error.response?.status === 409
+                ? `${client.name} já está inscrito(a) nesta cadência.`
+                : `Não foi possível inscrever ${client.name}.`;
+            setEnrollFeedback((current) => ({ ...current, [cadenceId]: { ok: false, text } }));
         },
     });
 
@@ -123,17 +158,70 @@ export function CadencesView() {
                                 <ClientPicker
                                     className="flex-1"
                                     value={clientByCadence[cadence.id] ?? null}
-                                    onChange={(client) => setClientByCadence((current) => ({ ...current, [cadence.id]: client }))}
+                                    onChange={(client) => {
+                                        setClientByCadence((current) => ({ ...current, [cadence.id]: client }));
+                                        setEnrollFeedback(({ [cadence.id]: _, ...rest }) => rest);
+                                    }}
                                     placeholder="Inscrever cliente..."
                                     allowClear={false}
                                 />
-                                <Button disabled={!clientByCadence[cadence.id] || enroll.isPending} onClick={() => enroll.mutate({ cadenceId: cadence.id, clientId: clientByCadence[cadence.id]!.id })}><Play className="mr-2 h-4 w-4" />Inscrever</Button>
+                                <Button disabled={!clientByCadence[cadence.id] || enroll.isPending} onClick={() => enroll.mutate({ cadenceId: cadence.id, client: clientByCadence[cadence.id]! })}><Play className="mr-2 h-4 w-4" />Inscrever</Button>
                             </div>
-                            <p className="text-xs text-slate-500">{cadence._count.enrollments} cliente(s) inscrito(s)</p>
+                            {enrollFeedback[cadence.id] ? (
+                                <p className={`text-sm font-semibold ${enrollFeedback[cadence.id].ok ? "text-emerald-600" : "text-rose-600"}`}>
+                                    {enrollFeedback[cadence.id].text}
+                                </p>
+                            ) : null}
+                            <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs text-slate-500">{cadence._count.enrollments} cliente(s) inscrito(s)</p>
+                                <Button type="button" variant="outline" size="sm" onClick={() => setEnrollmentsCadence(cadence)}>
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Ver inscritos
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 ))}
             </div>
+
+            <Modal
+                open={Boolean(enrollmentsCadence)}
+                onOpenChange={(open) => { if (!open) setEnrollmentsCadence(null); }}
+                title={enrollmentsCadence?.name ?? "Inscritos"}
+                description="Clientes inscritos nesta cadência e o andamento de cada um."
+            >
+                <div className="max-h-[60vh] space-y-2 overflow-y-auto">
+                    {enrollmentsQuery.isLoading ? (
+                        <p className="p-4 text-sm text-slate-500">Carregando...</p>
+                    ) : (enrollmentsQuery.data ?? []).length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                            Nenhum cliente inscrito ainda.
+                        </p>
+                    ) : (
+                        (enrollmentsQuery.data ?? []).map((enrollment) => (
+                            <div key={enrollment.id} className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="truncate font-semibold text-slate-800">{enrollment.client.name}</p>
+                                        <p className="truncate text-sm text-slate-500">
+                                            {enrollment.client.company || "Sem empresa"} · inscrito por {enrollment.user.name} em{" "}
+                                            {new Date(enrollment.enrolledAt).toLocaleDateString("pt-BR")}
+                                        </p>
+                                    </div>
+                                    <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-500 shadow-sm">
+                                        {statusLabels[enrollment.status]} · {enrollment.completedSteps}/{enrollment.totalSteps} etapas
+                                    </span>
+                                </div>
+                                <p className="mt-2 text-sm text-slate-600">
+                                    {enrollment.nextStep
+                                        ? `Próxima: ${enrollment.nextStep.title}${enrollment.nextStep.dueDate ? ` — ${new Date(enrollment.nextStep.dueDate).toLocaleDateString("pt-BR")}` : ""}`
+                                        : "Todas as etapas concluídas."}
+                                </p>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </Modal>
         </section>
     );
 }
