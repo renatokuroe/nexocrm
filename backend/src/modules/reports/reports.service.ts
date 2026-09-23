@@ -3,6 +3,7 @@
 
 import { prisma } from "../../prisma/client";
 import { DASHBOARD_INSIGHT_META, DASHBOARD_INSIGHT_RULES } from "./dashboard-insight-rules";
+import { visibleTasksWhere } from "../tasks/tasks.repository";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -67,7 +68,7 @@ export class ReportsService {
             }),
 
             // Pending tasks
-            prisma.task.count({ where: { user: { tenantId }, completed: false } }),
+            prisma.task.count({ where: { ...visibleTasksWhere(tenantId, userId), completed: false } }),
 
             // Recent 5 clients
             prisma.client.findMany({

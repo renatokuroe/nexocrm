@@ -7,9 +7,19 @@ const TASK_INCLUDE = {
     client: { select: { id: true, name: true, company: true } },
 };
 
+// Tasks are shared across the tenant, except cadence tasks, which belong only
+// to the user who enrolled the client in the cadence.
+export function visibleTasksWhere(tenantId: string, userId: string) {
+    return {
+        user: { tenantId },
+        OR: [{ cadenceEnrollmentId: null }, { userId }],
+    };
+}
+
 export class TasksRepository {
     async findAll(
         tenantId: string,
+        userId: string,
         filters: {
             completed?: boolean;
             priority?: TaskPriority;
@@ -17,7 +27,7 @@ export class TasksRepository {
         } = {}
     ) {
         const where: Record<string, unknown> = {
-            user: { tenantId },
+            ...visibleTasksWhere(tenantId, userId),
             ...(filters.completed !== undefined && { completed: filters.completed }),
             ...(filters.priority && { priority: filters.priority }),
             ...(filters.clientId && { clientId: filters.clientId }),
@@ -30,8 +40,8 @@ export class TasksRepository {
         });
     }
 
-    async findById(id: string, tenantId: string) {
-        return prisma.task.findFirst({ where: { id, user: { tenantId } }, include: TASK_INCLUDE });
+    async findById(id: string, tenantId: string, userId: string) {
+        return prisma.task.findFirst({ where: { id, ...visibleTasksWhere(tenantId, userId) }, include: TASK_INCLUDE });
     }
 
     async create(

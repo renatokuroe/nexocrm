@@ -8,7 +8,7 @@ export class TasksController {
     private service = new TasksService();
 
     list = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.list(req.user!.tenantId, req.query as any)); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.list(req.user!.tenantId, req.user!.id, req.query as any)); } catch (e) { next(e); }
     };
 
     create = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -16,14 +16,14 @@ export class TasksController {
     };
 
     update = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.update(req.params.id, req.user!.tenantId, req.body)); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.update(req.params.id, req.user!.tenantId, req.user!.id, req.body)); } catch (e) { next(e); }
     };
 
     toggle = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { sendSuccess(res, await this.service.toggle(req.params.id, req.user!.tenantId)); } catch (e) { next(e); }
+        try { sendSuccess(res, await this.service.toggle(req.params.id, req.user!.tenantId, req.user!.id)); } catch (e) { next(e); }
     };
 
     delete = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try { await this.service.delete(req.params.id, req.user!.tenantId); sendSuccess(res, null, "Task deleted"); } catch (e) { next(e); }
+        try { await this.service.delete(req.params.id, req.user!.tenantId, req.user!.id); sendSuccess(res, null, "Task deleted"); } catch (e) { next(e); }
     };
 }
