@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Input } from "@/components/ui/input";
 // Login form encapsulates auth screen behavior and API integration.
 export function LoginForm() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +39,9 @@ export function LoginForm() {
         try {
             const response = await api.post("/auth/login", { email, password });
             const { token, user } = response.data.data;
+
+            // Drop cached data from any previous session so another user's data never shows.
+            queryClient.clear();
 
             // Persist auth state in localStorage for client-side guarded routes.
             localStorage.setItem("nexo_token", token);

@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { User } from "@/types/domain";
 
 // Auth hook centralizes token/user access and auth actions.
 export function useAuth() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [token, setToken] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
 
@@ -31,6 +33,8 @@ export function useAuth() {
     }, []);
 
     const login = (authToken: string, authUser: User) => {
+        // Drop cached data from any previous session so another user's data never shows.
+        queryClient.clear();
         localStorage.setItem("nexo_token", authToken);
         localStorage.setItem("nexo_user", JSON.stringify(authUser));
         setToken(authToken);
@@ -39,6 +43,7 @@ export function useAuth() {
     };
 
     const logout = () => {
+        queryClient.clear();
         localStorage.removeItem("nexo_token");
         localStorage.removeItem("nexo_user");
         setToken(null);
