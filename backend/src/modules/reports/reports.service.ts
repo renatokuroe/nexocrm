@@ -62,7 +62,7 @@ export class ReportsService {
             prisma.deal.aggregate({
                 where: {
                     user: { tenantId },
-                    stage: { name: "Fechado (Ganho)" },
+                    stage: { name: DASHBOARD_INSIGHT_RULES.wonStageName },
                 },
                 _sum: { value: true },
             }),
@@ -98,7 +98,7 @@ export class ReportsService {
         INNER JOIN stages s ON d.stageId = s.id
         INNER JOIN users u ON d.userId = u.id
         WHERE u.tenantId = ${tenantId}
-          AND s.name = 'Fechado (Ganho)'
+          AND s.name = ${DASHBOARD_INSIGHT_RULES.wonStageName}
           AND d.closeDate >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
         GROUP BY DATE_FORMAT(d.closeDate, '%Y-%m')
         ORDER BY month ASC
@@ -202,7 +202,7 @@ export class ReportsService {
         // Calculate conversion rate (won / total)
         const totalDeals = await prisma.deal.count({ where: { user: { tenantId } } });
         const wonDeals = await prisma.deal.count({
-            where: { user: { tenantId }, stage: { name: "Fechado (Ganho)" } },
+            where: { user: { tenantId }, stage: { name: DASHBOARD_INSIGHT_RULES.wonStageName } },
         });
 
         // Average ticket (total revenue / won deals)

@@ -2,11 +2,11 @@ import { PrismaClient } from "@prisma/client";
 
 const defaultStages = [
     { name: "Prospecção", order: 1, color: "#ff0000" },
-    { name: "Qualificação", order: 2, color: "#ff0000" },
-    { name: "Proposta", order: 3, color: "#f59e0b" },
-    { name: "Negociação", order: 4, color: "#f97316" },
-    { name: "Fechado (Ganho)", order: 5, color: "#10b981" },
-    { name: "Fechado (Perdido)", order: 6, color: "#ef4444" },
+    { name: "Tentativa de conexão", order: 2, color: "#f97316" },
+    { name: "Conexão estabelecida", order: 3, color: "#f59e0b" },
+    { name: "Reunião agendada", order: 4, color: "#3b82f6" },
+    { name: "No Show", order: 5, color: "#ef4444" },
+    { name: "Reunião realizada", order: 6, color: "#10b981" },
 ];
 
 const defaultSegments = [

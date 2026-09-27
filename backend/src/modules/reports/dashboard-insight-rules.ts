@@ -1,5 +1,8 @@
 export const DASHBOARD_INSIGHT_RULES = {
-    closedStageNames: ["Fechado (Ganho)", "Fechado (Perdido)"],
+    // Stage whose deals count as won (revenue, conversion, average ticket).
+    wonStageName: "Reunião realizada",
+    // Final stages: excluded from active deals and stalled/urgent alerts.
+    closedStageNames: ["Reunião realizada", "No Show"],
     staleClientsDays: 21,
     stalledDealsDays: 10,
     lowValueDealThreshold: 1500,

@@ -191,7 +191,7 @@ model CustomFieldValue {
 // ─────────────────────────────────────────────
 model Stage {
   id        String   @id @default(cuid())
-  name      String   // e.g. "Prospecção", "Qualificação", "Proposta"
+  name      String   // e.g. "Prospecção", "Tentativa de conexão", "Reunião agendada"
   order     Int      // Column position (left to right)
   color     String   @default("#ff0000")
   tenantId  String

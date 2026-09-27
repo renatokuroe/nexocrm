@@ -110,7 +110,7 @@ async function main() {
                 {
                     title: "Implementação CRM",
                     value: 15000,
-                    stageId: stageMap["Fechado (Ganho)"],
+                    stageId: stageMap["Reunião realizada"],
                     clientId: clientMap["Ana Silva"],
                     userId: demoUserId,
                     closeDate: new Date("2026-01-26"),
@@ -118,7 +118,7 @@ async function main() {
                 {
                     title: "Identidade Visual",
                     value: 3500,
-                    stageId: stageMap["Negociação"],
+                    stageId: stageMap["Reunião agendada"],
                     clientId: clientMap["Bruno Oliveira"],
                     userId: demoUserId,
                     closeDate: new Date("2026-02-26"),
