@@ -5,11 +5,14 @@ import { Activity, DollarSign, ListTodo, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
+import { useAuth } from "@/hooks/use-auth";
 import { DashboardInsightsPanel } from "./dashboard-insights-panel";
 import { DashboardDailyActions } from "./dashboard-daily-actions";
 
 // Dashboard view aggregates KPIs and recent activity cards.
 export function DashboardView() {
+    const { user } = useAuth();
+    const companyName = user?.companyName?.trim();
     const { data, isLoading } = useQuery({
         queryKey: ["dashboard"],
         queryFn: async () => {
@@ -45,7 +48,7 @@ export function DashboardView() {
         <section>
             <PageHeader
                 title="Dashboard"
-                subtitle="Bem-vindo ao NexusCRM. Aqui está o resumo do seu negócio."
+                subtitle={`Bem-vindo${companyName ? ` ao ${companyName}` : ""}. Aqui está o resumo do seu negócio.`}
             />
 
             <div className="crm-grid mb-6">

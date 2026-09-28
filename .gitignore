@@ -45,3 +45,7 @@ npm-debug.log*
 # Temporary
 tmp/
 temp/
+
+# Claude Code local notes and settings
+CLAUDE.local.md
+.claude/
