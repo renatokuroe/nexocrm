@@ -35,6 +35,7 @@ model User {
   password  String   // bcrypt hashed
   role      UserRole @default(USER)
   tenantId  String
+  phoneExtension String? // API4Com extension used as the caller for click-to-call
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -46,6 +47,7 @@ model User {
   deals   Deal[]
   cadences Cadence[]
   cadenceEnrollments CadenceEnrollment[]
+  calls   Call[]
 
   @@map("users")
 }
@@ -93,6 +95,7 @@ model Client {
   deals             Deal[]
   tasks             Task[]
   cadenceEnrollments CadenceEnrollment[]
+  calls             Call[]
 
   @@index([userId])
   @@index([status])
@@ -226,6 +229,7 @@ model Deal {
   userId   String
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   labels   DealLabel[]
+  calls    Call[]
 
   @@index([stageId])
   @@index([userId])
@@ -365,4 +369,40 @@ model CadenceEnrollment {
   @@unique([cadenceId, clientId])
   @@index([userId, status])
   @@map("cadence_enrollments")
+}
+
+// ─────────────────────────────────────────────
+// CALL MODEL - Phone calls placed through API4Com
+// ─────────────────────────────────────────────
+enum CallStatus {
+  DIALING
+  ANSWERED
+  NOT_ANSWERED
+  BUSY
+  FAILED
+}
+
+model Call {
+  id          String     @id @default(cuid())
+  api4comId   String?    @unique
+  phone       String     // Number dialed, e.g. +5511999998888
+  status      CallStatus @default(DIALING)
+  duration    Int?       // Seconds
+  hangupCause String?
+  recordUrl   String?    @db.Text
+  answeredAt  DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId String
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  dealId   String?
+  deal     Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("calls")
 }

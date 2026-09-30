@@ -10,6 +10,7 @@ export class AdminRepository {
                 name: true,
                 email: true,
                 role: true,
+                phoneExtension: true,
                 createdAt: true,
                 tenant: {
                     select: {
@@ -76,6 +77,7 @@ export class AdminRepository {
             name?: string;
             email?: string;
             password?: string;
+            phoneExtension?: string | null;
             companyName?: string;
         }
     ) {
@@ -86,6 +88,7 @@ export class AdminRepository {
                     ...(data.name !== undefined ? { name: data.name } : {}),
                     ...(data.email !== undefined ? { email: data.email } : {}),
                     ...(data.password !== undefined ? { password: data.password } : {}),
+                    ...(data.phoneExtension !== undefined ? { phoneExtension: data.phoneExtension } : {}),
                 },
                 select: {
                     id: true,
@@ -104,6 +107,7 @@ export class AdminRepository {
                     name: true,
                     email: true,
                     role: true,
+                    phoneExtension: true,
                     tenantId: true,
                     tenant: { select: { id: true, name: true } },
                     createdAt: true,

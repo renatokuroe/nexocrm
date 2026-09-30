@@ -12,6 +12,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_URL: ${FRONTEND_URL}
+      API4COM_API_TOKEN: ${API4COM_API_TOKEN}
+      API4COM_WEBHOOK_SECRET: ${API4COM_WEBHOOK_SECRET}
     restart: always
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))" ]

@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { ClientPicker, PickedClient } from "@/components/ui/client-picker";
+import { CallButton } from "@/components/ui/call-button";
+import { CallHistory } from "@/components/ui/call-history";
 import { Client } from "@/types/domain";
 
 interface DealLabelLink {
@@ -450,6 +452,10 @@ export function PipelineView() {
                                                     <Calendar className="h-4 w-4" />
                                                     {deal.closeDate ? new Date(deal.closeDate).toLocaleDateString("pt-BR") : "Sem previsão"}
                                                 </div>
+                                                <div className="flex items-center">
+                                                {deal.client ? (
+                                                    <CallButton clientId={deal.client.id} phone={deal.client.phone} dealId={deal.id} />
+                                                ) : null}
                                                 {buildWhatsAppLink(deal.client?.phone) ? (
                                                     <a
                                                         href={buildWhatsAppLink(deal.client?.phone) || undefined}
@@ -463,6 +469,7 @@ export function PipelineView() {
                                                         <MessageCircle className="h-4 w-4" />
                                                     </a>
                                                 ) : null}
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -832,6 +839,7 @@ export function PipelineView() {
                                 ))}
                             </div>
                         ) : null}
+                        <CallHistory clientId={selectedClient.id} />
                         <div className="flex justify-end border-t border-slate-200 pt-4">
                             <Button type="button" variant="outline" onClick={copySelectedClientData}>
                                 <Clipboard className="mr-2 h-4 w-4" />

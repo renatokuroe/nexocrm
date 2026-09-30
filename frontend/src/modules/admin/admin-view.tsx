@@ -16,6 +16,7 @@ interface AdminUser {
     name: string;
     email: string;
     role: "ADMIN" | "USER";
+    phoneExtension: string | null;
     createdAt: string;
     tenant: {
         id: string;
@@ -38,6 +39,7 @@ export function AdminView() {
         name: "",
         email: "",
         password: "",
+        phoneExtension: "",
     });
 
     const usersQuery = useQuery({
@@ -70,12 +72,13 @@ export function AdminView() {
                 name: editForm.name,
                 email: editForm.email,
                 password: editForm.password || undefined,
+                phoneExtension: editForm.phoneExtension.trim() || null,
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin-users"] });
             setOpenEdit(false);
-            setEditForm({ id: "", name: "", email: "", password: "" });
+            setEditForm({ id: "", name: "", email: "", password: "", phoneExtension: "" });
         },
     });
 
@@ -104,6 +107,7 @@ export function AdminView() {
             name: row.name,
             email: row.email,
             password: "",
+            phoneExtension: row.phoneExtension ?? "",
         });
         setOpenEdit(true);
     };
@@ -173,6 +177,7 @@ export function AdminView() {
                                     <th className="px-4 py-3">Email</th>
                                     <th className="px-4 py-3">Empresa</th>
                                     <th className="px-4 py-3">Perfil</th>
+                                    <th className="px-4 py-3">Ramal</th>
                                     <th className="px-4 py-3">Criado em</th>
                                     <th className="px-4 py-3" />
                                 </tr>
@@ -184,6 +189,7 @@ export function AdminView() {
                                         <td className="px-4 py-3 text-slate-600">{row.email}</td>
                                         <td className="px-4 py-3 text-slate-700">{row.tenant?.name ?? "Sem tenant"}</td>
                                         <td className="px-4 py-3 text-slate-600">{row.role}</td>
+                                        <td className="px-4 py-3 text-slate-600">{row.phoneExtension || "-"}</td>
                                         <td className="px-4 py-3 text-slate-500">
                                             {new Date(row.createdAt).toLocaleDateString("pt-BR")}
                                         </td>
@@ -282,6 +288,14 @@ export function AdminView() {
                         value={editForm.password}
                         onChange={(e) => setEditForm((prev) => ({ ...prev, password: e.target.value }))}
                     />
+                    <label className="block space-y-1 text-sm font-semibold text-slate-600">
+                        Ramal da API4Com (para ligar pelo CRM)
+                        <Input
+                            placeholder="Ex.: 1001"
+                            value={editForm.phoneExtension}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, phoneExtension: e.target.value }))}
+                        />
+                    </label>
 
                     <div className="flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setOpenEdit(false)}>

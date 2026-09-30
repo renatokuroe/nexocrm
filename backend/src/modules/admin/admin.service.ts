@@ -55,6 +55,7 @@ export class AdminService {
             name: dto.name,
             email: dto.email,
             password,
+            phoneExtension: dto.phoneExtension === undefined ? undefined : dto.phoneExtension?.trim() || null,
         });
 
         if (!updated) {

@@ -3,6 +3,7 @@ import { Check, ClipboardList, Linkedin, Mail, MessageCircle, Phone } from "luci
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CallButton } from "@/components/ui/call-button";
 
 type Channel = "TASK" | "CALL" | "EMAIL" | "WHATSAPP" | "LINKEDIN";
 
@@ -97,6 +98,10 @@ export function DashboardDailyActions({ actions }: { actions: DailyAction[] }) {
                                                 </div>
                                             </div>
                                         </div>
+                                        <div className="flex shrink-0 items-center gap-1">
+                                        {action.channel === "CALL" && action.client ? (
+                                            <CallButton clientId={action.client.id} phone={action.client.phone} />
+                                        ) : null}
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -108,6 +113,7 @@ export function DashboardDailyActions({ actions }: { actions: DailyAction[] }) {
                                             <Check className="mr-1 h-4 w-4" />
                                             Concluir
                                         </Button>
+                                        </div>
                                     </div>
                                 </div>
                             );

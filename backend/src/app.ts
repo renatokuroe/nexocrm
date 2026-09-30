@@ -16,6 +16,7 @@ import tasksRoutes from "./modules/tasks/tasks.routes";
 import cadencesRoutes from "./modules/cadences/cadences.routes";
 import reportsRoutes from "./modules/reports/reports.routes";
 import adminRoutes from "./modules/admin/admin.routes";
+import callsRoutes from "./modules/calls/calls.routes";
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use(`${API_PREFIX}/tasks`, tasksRoutes);
 app.use(`${API_PREFIX}/cadences`, cadencesRoutes);
 app.use(`${API_PREFIX}/reports`, reportsRoutes);
 app.use(`${API_PREFIX}/admin`, adminRoutes);
+app.use(`${API_PREFIX}/calls`, callsRoutes);
 
 // 404 handler for unknown routes
 app.use((_req, res) => {

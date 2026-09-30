@@ -18,7 +18,7 @@ Dados de acesso ao servidor e o passo a passo exato de deploy ficam em `CLAUDE.l
 | Backend (`backend/`) | Node 20, Express 4, TypeScript (compila para `dist/`), Prisma 5, JWT (`jsonwebtoken`), bcryptjs |
 | Banco | MySQL no AWS RDS (`nexocrm`), migrações Prisma em `backend/prisma/migrations` |
 | Infra | EC2 Ubuntu com Docker Compose (`docker-compose.prod.yml`): containers `nexocrm-backend` (3001), `nexocrm-frontend` (3000) e `nexocrm-caddy` (HTTPS; `/api/*` → backend, resto → frontend) |
-| Integração | n8n em https://n8n.aria.social.br (cadastro automático de leads, ver abaixo) |
+| Integração | n8n em https://n8n.aria.social.br (cadastro automático de leads, ver abaixo); API4Com para ligações (ver abaixo) |
 
 Não há testes automatizados nem ESLint configurado (`next lint` abre um assistente interativo). A validação é o TypeScript.
 
@@ -45,6 +45,16 @@ Não há testes automatizados nem ESLint configurado (`next lint` abre um assist
 - Autentica com um JWT **sem expiração** do usuário Renato Kuroe (admin), escrito no cabeçalho do nó "CRM - Criar Cliente" (escolha do usuário). Trocar o `JWT_SECRET` do servidor invalida esse token e desloga todos os usuários.
 - Editar o workflow pela ferramenta do n8n só salva um rascunho: é preciso publicar para a versão ativa mudar.
 - Qualquer campo novo enviado pelo n8n precisa existir no backend antes: o cadastro repassa o corpo para o Prisma, e um campo desconhecido gera erro.
+
+### Ligações (API4Com)
+- Botão "Ligar" (ícone de telefone) na lista de clientes, nos cards do pipeline e nas ações do dia do tipo Ligação. Componentes `CallButton` e `CallHistory` em `frontend/src/components/ui/`; backend em `backend/src/modules/calls/`.
+- Fluxo: `POST /api/calls` → `POST https://api.api4com.com/api/v1/calls` com `caller` = `extension` = ramal do usuário. A API4Com toca primeiro o ramal do vendedor; quando ele atende, liga para o lead. O telefone do cliente é convertido para `+55DDDNÚMERO` (`toE164BrazilPhone`).
+- Cada usuário precisa do ramal em `users.phoneExtension`, cadastrado em Admin > Usuários > editar. Sem ramal, a API responde 400 com a orientação.
+- Um único token da API4Com para o servidor todo (`API4COM_API_TOKEN`, sem "Bearer"). Serve para uma empresa só; se outra empresa do CRM usar ligações, o token terá de passar a ser por empresa.
+- Fim da chamada: a API4Com envia o webhook `channel-hangup` para `/api/calls/webhook?secret=<API4COM_WEBHOOK_SECRET>`, identificado por `metadata.callId`. A rota é pública e protegida só pelo segredo. O webhook é registrado uma vez por `configureApi4comWebhook` (comando em `api4com.client.ts`), com o gateway `nexocrm`; ligações sem esse gateway (feitas fora do CRM) não chegam aqui.
+- O webhook pode chegar mais de uma vez por ligação (perna do ramal e perna do lead): mantemos o melhor status, a maior duração e a gravação. A regra de status (`statusFromHangup`) foi escrita pela documentação, sem ter visto um webhook real; confira na primeira ligação.
+- Erros da API4Com viram 502, nunca 401 (o frontend desloga em qualquer 401).
+- O histórico de ligações é da empresa toda e aparece nos modais de editar cliente e de dados do cliente no pipeline.
 
 ### Pipeline
 - Etapas (por empresa, em ordem): Prospecção → Tentativa de conexão → Conexão estabelecida → Reunião agendada → No Show → Reunião realizada (funil de SDR, desde 27/09/2026).

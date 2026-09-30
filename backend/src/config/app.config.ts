@@ -23,6 +23,14 @@ export const config = {
     // ── CORS ──────────────────────────────────────────────────────────────
     frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
 
+    // ── API4Com (click-to-call) ───────────────────────────────────────────
+    api4com: {
+        apiUrl: process.env.API4COM_API_URL || "https://api.api4com.com/api/v1",
+        token: process.env.API4COM_API_TOKEN || "",
+        // Shared secret sent by API4Com as ?secret= on the webhook URL
+        webhookSecret: process.env.API4COM_WEBHOOK_SECRET || "",
+    },
+
     // ── Database ──────────────────────────────────────────────────────────
     databaseUrl: process.env.DATABASE_URL || "",
 } as const;

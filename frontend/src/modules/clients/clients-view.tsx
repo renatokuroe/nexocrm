@@ -11,6 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
+import { CallButton } from "@/components/ui/call-button";
+import { CallHistory } from "@/components/ui/call-history";
 import { Client, CustomField, Segment } from "@/types/domain";
 
 type ClientStatus = Client["status"];
@@ -542,6 +544,7 @@ export function ClientsView() {
                                                 </td>
                                             ))}
                                             <td className="px-4 py-3 text-right">
+                                                <CallButton clientId={client.id} phone={client.phone} className="mr-1" />
                                                 {buildWhatsAppLink(client.phone || "") ? (
                                                     <a
                                                         className="mr-1 inline-flex rounded-lg p-2 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
@@ -793,6 +796,8 @@ export function ClientsView() {
                                 </label>
                             ))}
                         </div>
+
+                        <CallHistory clientId={editingClient.id} />
 
                         <div className="flex flex-wrap justify-between gap-2">
                             <Button type="button" variant="outline" onClick={copyClientData}>
